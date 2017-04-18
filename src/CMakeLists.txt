@@ -9,6 +9,7 @@ find_library (POCO_NET PocoNet)
 find_library (POCO_JSON PocoJSON)
 find_library (POCO_XML PocoXML)
 find_library (PTHREAD pthread)
+find_library (ZMQ zmq)
 
 file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/commands/DeviceSetValueCommand.cpp
@@ -43,6 +44,7 @@ file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/util/CSVSensorDataFormatter.cpp
 	${PROJECT_SOURCE_DIR}/util/NullSensorDataFormatter.cpp
 	${PROJECT_SOURCE_DIR}/util/SensorDataFormatter.cpp
+	${PROJECT_SOURCE_DIR}/util/ZMQUtil.cpp
 	${PROJECT_SOURCE_DIR}/zmq/ZMQDeviceManagerTable.cpp
 	${PROJECT_SOURCE_DIR}/zmq/ZMQMessage.cpp
 	${PROJECT_SOURCE_DIR}/zmq/ZMQMessageError.cpp
@@ -72,6 +74,7 @@ set(LIBS
 	${POCO_JSON}
 	${POCO_XML}
 	${PTHREAD}
+	${ZMQ}
 )
 
 target_link_libraries(beeeon-gateway
