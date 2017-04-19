@@ -46,6 +46,7 @@ file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/util/SensorDataFormatter.cpp
 	${PROJECT_SOURCE_DIR}/util/ZMQUtil.cpp
 	${PROJECT_SOURCE_DIR}/zmq/ZMQBroker.cpp
+	${PROJECT_SOURCE_DIR}/zmq/ZMQClient.cpp
 	${PROJECT_SOURCE_DIR}/zmq/ZMQConnector.cpp
 	${PROJECT_SOURCE_DIR}/zmq/ZMQDeviceManagerTable.cpp
 	${PROJECT_SOURCE_DIR}/zmq/ZMQMessage.cpp
