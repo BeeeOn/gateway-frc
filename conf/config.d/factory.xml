@@ -5,6 +5,8 @@
 			<add name="runnables" ref="virtualSensor2" if-yes="${virtual-sensor2.enable}" />
 			<add name="runnables" ref="virtualSensor3" if-yes="${virtual-sensor3.enable}" />
 			<add name="runnables" ref="testingCenter" if-yes="${testing.center.enable}" />
+			<add name="runnables" ref="asyncExecutor" />
+			<add name="runnables" ref="collector" />
 		</instance>
 
 		<instance name="csvStatisticsFormatter" class="BeeeOn::CSVStatisticsFormatter">
@@ -14,6 +16,14 @@
 		<instance name="statisticsPrinter" class="BeeeOn::StatisticsPrinter">
 			<set name="formatter" ref="csvStatisticsFormatter"/>
 			<set name="outputFile" text="/tmp/beeeon-gateway-statistics.csv"/>
+		</instance>
+
+		<instance name="asyncExecutor" class="BeeeOn::AsyncExecutor">
+		</instance>
+
+		<instance name="collector" class="BeeeOn::SimpleCollector">
+			<set name="exportInterval" number="30"/>
+			<set name="printer" ref="statisticsPrinter"/>
 		</instance>
 
 		<instance name="distributor" class="BeeeOn::BasicDistributor">
