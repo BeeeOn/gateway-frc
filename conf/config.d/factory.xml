@@ -11,6 +11,11 @@
 			<set name="separator" text=";"/>
 		</instance>
 
+		<instance name="statisticsPrinter" class="BeeeOn::StatisticsPrinter">
+			<set name="formatter" ref="csvStatisticsFormatter"/>
+			<set name="outputFile" text="/tmp/beeeon-gateway-statistics.csv"/>
+		</instance>
+
 		<instance name="distributor" class="BeeeOn::BasicDistributor">
 			<set name="exporter" ref="namedPipeExporter" if-yes="${exporter.pipe.enable}"/>
 		</instance>

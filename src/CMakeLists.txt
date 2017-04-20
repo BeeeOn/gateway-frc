@@ -46,6 +46,7 @@ file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/util/NullSensorDataFormatter.cpp
 	${PROJECT_SOURCE_DIR}/util/SensorDataFormatter.cpp
 	${PROJECT_SOURCE_DIR}/util/StatisticsData.cpp
+	${PROJECT_SOURCE_DIR}/util/StatisticsPrinter.cpp
 )
 
 file(GLOB TESTING_SOURCES
