@@ -38,6 +38,8 @@ file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/credentials/PasswordCredentials.cpp
 	${PROJECT_SOURCE_DIR}/credentials/PinCredentials.cpp
 	${PROJECT_SOURCE_DIR}/exporters/NamedPipeExporter.cpp
+	${PROJECT_SOURCE_DIR}/jablotron/JablotronDeviceManager.cpp
+	${PROJECT_SOURCE_DIR}/jablotron/SerialControl.cpp
 	${PROJECT_SOURCE_DIR}/model/DeviceManagerID.cpp
 	${PROJECT_SOURCE_DIR}/model/ModuleID.cpp
 	${PROJECT_SOURCE_DIR}/model/SensorValue.cpp
