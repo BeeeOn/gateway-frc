@@ -1,8 +1,11 @@
+#include <Poco/Delegate.h>
+
 #include <Options.h>
 #include <Manager.h>
 
 #include "di/Injectable.h"
 #include "z-wave/ZWaveDeviceManager.h"
+#include "zmq/ZMQMessage.h"
 
 #include "z-wave/manufacturers/FibaroZWaveMessageFactory.h"
 
@@ -25,9 +28,20 @@ BEEEON_OBJECT_END(BeeeOn, ZWaveDeviceManager)
 using namespace BeeeOn;
 using namespace OpenZWave;
 
+ZWaveDeviceManager::ZWaveDeviceManager()
+{
+	m_zmqClient->onReceive += Poco::delegate(this, &ZWaveDeviceManager::onEvent);
+}
+
 void ZWaveDeviceManager::onEvent(const void *, ZMQMessage &zmqMessage)
 {
-
+	switch(zmqMessage.type().raw()){
+	case ZMQMessageType::TYPE_LISTEN_CMD:
+		OpenZWave::Manager::Get()->AddNode(m_homeId, false);
+		break;
+	default:
+		logger().error("unsupported result " + zmqMessage.type().toString());
+	}
 }
 
 void ZWaveDeviceManager::setUserPath(const std::string &userPath)

@@ -11,6 +11,8 @@ namespace BeeeOn {
 
 class ZWaveDeviceManager : public DeviceManager {
 public:
+	ZWaveDeviceManager();
+
 	void run() override;
 	void stop() override;
 
