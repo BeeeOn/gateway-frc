@@ -69,6 +69,7 @@ file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/zmq/ZMQMessageType.cpp
 	${PROJECT_SOURCE_DIR}/z-wave/NotificationProcessor.cpp
 	${PROJECT_SOURCE_DIR}/z-wave/ZWaveDeviceManager.cpp
+	${PROJECT_SOURCE_DIR}/z-wave/ZWaveMessage.cpp
 )
 
 file(GLOB TESTING_SOURCES
