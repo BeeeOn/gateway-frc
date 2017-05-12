@@ -28,6 +28,8 @@
 
 		<instance name="distributor" class="BeeeOn::BasicDistributor">
 			<set name="exporter" ref="namedPipeExporter" if-yes="${exporter.pipe.enable}"/>
+			<set name="executor" ref="asyncExecutor"/>
+			<add name="listener" ref="collector"/>
 		</instance>
 
 		<instance name="commandDispatcher" class="BeeeOn::CommandDispatcher">
