@@ -44,6 +44,7 @@ file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/model/SensorValue.cpp
 	${PROJECT_SOURCE_DIR}/net/SOAPMessage.cpp
 	${PROJECT_SOURCE_DIR}/net/UPnP.cpp
+	${PROJECT_SOURCE_DIR}/util/AsyncExecutor.cpp
 	${PROJECT_SOURCE_DIR}/util/CSVSensorDataFormatter.cpp
 	${PROJECT_SOURCE_DIR}/util/CSVStatisticsFormatter.cpp
 	${PROJECT_SOURCE_DIR}/util/NullSensorDataFormatter.cpp
