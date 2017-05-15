@@ -105,6 +105,14 @@ public:
 	{
 	}
 
+	~InitComponents()
+	{
+		delete m_broker;
+
+		for (auto item : m_clients)
+			delete item;
+	}
+
 	FakeBroker* addServer()
 	{
 		m_broker = new FakeBroker();
