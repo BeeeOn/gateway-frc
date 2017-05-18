@@ -16,9 +16,9 @@ namespace BeeeOn {
 
 class ZMQBrokerTest : public CppUnit::TestFixture {
 	CPPUNIT_TEST_SUITE(ZMQBrokerTest);
-	//CPPUNIT_TEST(testAssignDeviceManagerID);
-	//CPPUNIT_TEST(testListenCommandOneClient);
-	//CPPUNIT_TEST(testListenCommandTwoClients);
+	CPPUNIT_TEST(testAssignDeviceManagerID);
+	CPPUNIT_TEST(testListenCommandOneClient);
+	CPPUNIT_TEST(testListenCommandTwoClients);
 	CPPUNIT_TEST(testUnpairCommand);
 	CPPUNIT_TEST_SUITE_END();
 

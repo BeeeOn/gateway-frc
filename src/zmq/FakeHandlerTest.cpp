@@ -70,7 +70,7 @@ bool FakeHandlerTest::accept(const Command::Ptr cmd)
 
 void FakeHandlerTest::handle(Command::Ptr cmd, Answer::Ptr answer)
 {
-	logger().debug("handle XXX: " + cmd->name());
+	logger().debug("handle: "  + cmd->name());
 
 	if (cmd->is<ServerDeviceListCommand>()) {
 		logger().debug("handle: server device list ");
@@ -111,15 +111,12 @@ void FakeHandlerTest::handle(Command::Ptr cmd, Answer::Ptr answer)
 			result->notifyUpdated();
 		}
 		else {
-
 			if (deviceID == m_devicePopp) {
-				logger().error("POPP::: " + std::to_string(m_devicePoppLastState));
 				result->setValueUnlocked(m_devicePoppLastState);
 				result->setStatusUnlocked(Result::SUCCESS);
 			}
 			else if (deviceID == m_deviceDLink) {
 				result->setValueUnlocked(m_deviceDLinkLastState);
-				logger().error("DLINK::: " + std::to_string(m_deviceDLinkLastState));
 				result->setStatusUnlocked(Result::SUCCESS);
 			}
 			else if (deviceID == m_deviceAeotec && moduleID == ModuleID(6)) {
@@ -129,9 +126,6 @@ void FakeHandlerTest::handle(Command::Ptr cmd, Answer::Ptr answer)
 			else if (deviceID == m_deviceAeotec && moduleID == ModuleID(8)) {
 				result->setValueUnlocked(m_deviceAeotecRefreshTimeLastValue);
 				result->setStatusUnlocked(Result::SUCCESS);
-			}
-			else {
-				logger().error("Z-Wave zariadenia" + std::to_string(deviceID.ident() & 0x0f));
 			}
 
 			result->notifyUpdated();
@@ -168,7 +162,7 @@ void FakeHandlerTest::fire(Timer &)
 	Result::Ptr result = new Result(answer);
 	Command::Ptr cmd;
 
-	logger().error("run action: " + m_action);
+	logger().debug("run action: " + m_action);
 
 	if (m_action == "listen") {
 		cmd = new GatewayListenCommand(
@@ -225,7 +219,6 @@ vector<DeviceID> FakeHandlerTest::pairedDevices(
 
 void FakeHandlerTest::addPairedDeviceID(const DeviceID &deviceID)
 {
-	logger().warning("device: " + deviceID.toString());
 	m_pairedDevice.insert(deviceID);
 }
 
