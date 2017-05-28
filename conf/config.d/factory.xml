@@ -7,6 +7,10 @@
 			<add name="runnables" ref="testingCenter" if-yes="${testing.center.enable}" />
 		</instance>
 
+		<instance name="csvStatisticsFormatter" class="BeeeOn::CSVStatisticsFormatter">
+			<set name="separator" text=";"/>
+		</instance>
+
 		<instance name="distributor" class="BeeeOn::BasicDistributor">
 			<set name="exporter" ref="namedPipeExporter" if-yes="${exporter.pipe.enable}"/>
 		</instance>
