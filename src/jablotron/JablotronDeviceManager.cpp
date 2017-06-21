@@ -49,7 +49,7 @@ JablotronDeviceManager::JablotronDeviceManager():
 	m_sensorEvent(false),
 	m_queueLoop(false),
 	m_callback(*this, &JablotronDeviceManager::stopListen),
-	m_listen(false),
+	m_listen(true),
 	m_deferAfter(1000, 0)
 {
 	m_zmqClient->onReceive += delegate(this, &JablotronDeviceManager::onEvent);
@@ -64,13 +64,10 @@ void JablotronDeviceManager::run()
 	runClient();
 
 	sleep(1);
-	getDeviceList();
+	//getDeviceList();
 
 	while (!m_stop) {
 		checkQueue();
-
-		if (m_devicesWithFlag.size() == 0)
-			continue;
 
 		if (!loadJablotronDevices(loadDevices)) {
 			sleep(DELAY_BETWEEN_PARSE);
@@ -642,6 +639,6 @@ void JablotronDeviceManager::startListen(Timer &timer)
 void JablotronDeviceManager::stopListen(Timer &)
 {
 	logger().debug("stop listen");
-	m_listen = false;
+	m_listen = true;
 	getDeviceList();
 }

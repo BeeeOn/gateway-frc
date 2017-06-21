@@ -38,7 +38,7 @@ using namespace OpenZWave;
 
 ZWaveDeviceManager::ZWaveDeviceManager():
 	m_notificationProcessor(m_devices, m_listen),
-	m_listen(false),
+	m_listen(true),
 	m_callback(*this, &ZWaveDeviceManager::stopListen),
 	m_derefListen(1000, 0),
 	m_callbackUnpair(*this, &ZWaveDeviceManager::stopUnpair),
@@ -334,7 +334,7 @@ void ZWaveDeviceManager::stopListen(Poco::Timer &)
 	logger().debug("stop listen");
 	OpenZWave::Manager::Get()->CancelControllerCommand(m_homeId);
 
-	m_listen = false;
+	m_listen = true;
 	getDeviceList();
 }
 

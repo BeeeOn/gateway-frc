@@ -5,9 +5,7 @@
 			<add name="runnables" ref="virtualSensor2" if-yes="${virtual-sensor2.enable}" />
 			<add name="runnables" ref="virtualSensor3" if-yes="${virtual-sensor3.enable}" />
 			<add name="runnables" ref="testingCenter" if-yes="${testing.center.enable}" />
-
-		<instance name="test" class="BeeeOn::LoopRunner">
-			<add name="runnables" ref="zmqBroker" if-yes="${zmq-broker.enable}" />
+			<add name="runnables" ref="zmqBroker" />
 		</instance>
 
 		<instance name="distributor" class="BeeeOn::BasicDistributor">
@@ -85,8 +83,6 @@
 			<set name="console" ref="testingConsole" />
 		</instance>
 
-=======
->>>>>>> all:conf/config.d/test-factory.xml
 		<instance name="zmqBroker" class="BeeeOn::ZMQBroker">
 			<set name="dataServerHost" text="${zmq-broker.data.server.host}" />
 			<set name="dataServerPort" number="${zmq-broker.data.server.port}" />

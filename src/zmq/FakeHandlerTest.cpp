@@ -60,6 +60,7 @@ FakeHandlerTest::FakeHandlerTest() :
 
 bool FakeHandlerTest::accept(const Command::Ptr cmd)
 {
+	logger().error("handle");
 	if (cmd->is<ServerDeviceListCommand>())
 		return true;
 	else if (cmd->is<ServerLastValueCommand>())
