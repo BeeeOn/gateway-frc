@@ -1,0 +1,73 @@
+<system>
+	<factory>
+		<instance name="main" class="BeeeOn::LoopRunner">
+			<add name="runnables" ref="virtualSensor1" if-yes="${virtual-sensor1.enable}" />
+			<add name="runnables" ref="virtualSensor2" if-yes="${virtual-sensor2.enable}" />
+			<add name="runnables" ref="virtualSensor3" if-yes="${virtual-sensor3.enable}" />
+			<add name="runnables" ref="testingCenter" if-yes="${testing.center.enable}" />
+			<add name="runnables" ref="asyncExecutor" />
+			<add name="runnables" ref="collector" />
+		</instance>
+
+		<instance name="csvStatisticsFormatter" class="BeeeOn::CSVStatisticsFormatter">
+			<set name="separator" text=";"/>
+		</instance>
+
+		<instance name="statisticsPrinter" class="BeeeOn::StatisticsPrinter">
+			<set name="formatter" ref="csvStatisticsFormatter"/>
+			<set name="outputFile" text="/tmp/beeeon-gateway-statistics.csv"/>
+		</instance>
+
+		<instance name="asyncExecutor" class="BeeeOn::AsyncExecutor">
+		</instance>
+
+		<instance name="collector" class="BeeeOn::SimpleCollector">
+			<set name="exportInterval" number="30"/>
+			<set name="printer" ref="statisticsPrinter"/>
+		</instance>
+
+		<instance name="distributor" class="BeeeOn::BasicDistributor">
+			<set name="exporter" ref="namedPipeExporter" if-yes="${exporter.pipe.enable}"/>
+			<set name="executor" ref="asyncExecutor"/>
+			<add name="listener" ref="collector"/>
+		</instance>
+
+		<instance name="commandDispatcher" class="BeeeOn::CommandDispatcher">
+		</instance>
+
+		<instance name="virtualSensor1" class="BeeeOn::VirtualSensor">
+			<set name="refresh" number="${virtual-sensor1.refresh}" />
+			<set name="min" number="${virtual-sensor1.min}" />
+			<set name="max" number="${virtual-sensor1.max}" />
+			<set name="deviceId" text="${virtual-sensor1.deviceId}" />
+			<set name="distributor" ref="distributor"/>
+		</instance>
+
+		<instance name="virtualSensor2" class="BeeeOn::VirtualSensor">
+			<set name="refresh" number="${virtual-sensor2.refresh}" />
+			<set name="min" number="${virtual-sensor2.min}" />
+			<set name="max" number="${virtual-sensor2.max}" />
+			<set name="deviceId" text="${virtual-sensor2.deviceId}" />
+			<set name="distributor" ref="distributor"/>
+		</instance>
+
+		<instance name="virtualSensor3" class="BeeeOn::VirtualSensor">
+			<set name="refresh" number="${virtual-sensor3.refresh}" />
+			<set name="min" number="${virtual-sensor3.min}" />
+			<set name="max" number="${virtual-sensor3.max}" />
+			<set name="deviceId" text="${virtual-sensor3.deviceId}" />
+			<set name="distributor" ref="distributor"/>
+		</instance>
+
+		<instance name="testingConsole" class="BeeeOn::TCPConsole">
+			<set name="address" text="${testing.center.tcp.address}" />
+			<set name="port" number="${testing.center.tcp.port}" />
+			<set name="recvTimeout" number="0" />
+		</instance>
+
+		<instance name="testingCenter" class="BeeeOn::TestingCenter">
+			<set name="commandDispatcher" ref="commandDispatcher" />
+			<set name="console" ref="testingConsole" />
+		</instance>
+	</factory>
+</system>
