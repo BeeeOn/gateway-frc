@@ -27,9 +27,9 @@ void CommandDispatcher::dispatch(Command::Ptr cmd, Answer::Ptr answer)
 {
 	Poco::FastMutex::ScopedLock guard(m_mutex);
 
-	std::cout << "dispatch1\n";
+//	std::cout << "dispatch1\n";
 	for (auto item : m_commandHandlers) {
-		std::cout << "dispatch\n";
+//		std::cout << "dispatch\n";
 		if (!item->accept(cmd))
 			continue;
 
