@@ -32,7 +32,7 @@ void SimpleCollector::onExport(const SensorData &data)
 {
 	Mutex::ScopedLock lock(m_mutexAddRecord);
 
-	poco_critical(logger(), "collecting new data from deviceID: " + to_string(data.deviceID()));
+	poco_debug(logger(), "collecting new data from deviceID: " + to_string(data.deviceID()));
 	auto it = m_data.find(data.deviceID());
 	if (it == m_data.end())
 		insertData(data);

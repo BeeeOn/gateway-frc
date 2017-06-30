@@ -25,7 +25,6 @@ void BasicDistributor::exportData(const SensorData &sensorData)
 	Poco::FastMutex::ScopedLock lock(m_exportMutex);
 
 	notifyListeners(sensorData);
-	logger().critical("err2");
 
 	for (Poco::SharedPtr<Exporter> exporter : m_exporters) {
 		try {

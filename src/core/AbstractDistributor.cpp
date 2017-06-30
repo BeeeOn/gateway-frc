@@ -18,9 +18,7 @@ void AbstractDistributor::notifyListeners(const SensorData &data)
 {
 	std::vector<Poco::SharedPtr<DistributorListener>> listeners = m_listeners;
 
-	logger().critical("err1");
 	if (!m_executor.isNull()) {
-		logger().critical("err");
 		m_executor->invoke([listeners, data]() {
 			for (auto listener : listeners)
 				listener->onExport(data);
