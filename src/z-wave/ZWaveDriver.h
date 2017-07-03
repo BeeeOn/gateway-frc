@@ -4,7 +4,7 @@
 
 #include <Poco/RegularExpression.h>
 
-#include <Manager.h>
+#include <openzwave/Manager.h>
 
 namespace BeeeOn {
 

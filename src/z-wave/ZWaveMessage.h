@@ -5,7 +5,7 @@
 
 #include <Poco/Logger.h>
 
-#include <Manager.h>
+#include <openzwave/Manager.h>
 
 #include "model/SensorData.h"
 #include "util/Loggable.h"

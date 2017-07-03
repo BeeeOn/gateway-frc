@@ -1,12 +1,6 @@
 cmake_minimum_required (VERSION 2.8.11)
 project (gateway-core CXX)
 
-include_directories (
-PATHS
-/usr/include/openzwave
-/usr/local/include/openzwave
-)
-
 find_library (POCO_FOUNDATION PocoFoundation)
 find_library (POCO_SSL PocoNetSSL)
 find_library (POCO_CRYPTO PocoCrypto)
@@ -16,10 +10,7 @@ find_library (POCO_JSON PocoJSON)
 find_library (POCO_XML PocoXML)
 find_library (PTHREAD pthread)
 find_library (ZMQ zmq)
-find_library (OPENZWAVE openzwave
-PATH
-/usr/local/lib64
-)
+find_library (OPENZWAVE openzwave)
 
 file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/commands/DeviceSetValueCommand.cpp

@@ -2,9 +2,9 @@
 
 #include <Poco/Delegate.h>
 
-#include <Options.h>
-#include <Manager.h>
-#include <platform/Log.h>
+#include <openzwave/Options.h>
+#include <openzwave/Manager.h>
+#include <openzwave/platform/Log.h>
 
 #include "di/Injectable.h"
 #include "z-wave/ZWaveDeviceManager.h"

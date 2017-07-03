@@ -8,7 +8,7 @@
 #include <Poco/Nullable.h>
 #include <Poco/SharedPtr.h>
 
-#include <Notification.h>
+#include <openzwave/Notification.h>
 
 #include "util/Loggable.h"
 #include "z-wave/GenericZWaveMessageFactory.h"

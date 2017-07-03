@@ -5,7 +5,7 @@
 #include <Poco/ScopedLock.h>
 #include <Poco/NumberParser.h>
 
-#include <Manager.h>
+#include <openzwave/Manager.h>
 
 #include "z-wave/NotificationProcessor.h"
 #include "zmq/ZMQMessage.h"

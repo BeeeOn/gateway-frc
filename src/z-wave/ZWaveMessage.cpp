@@ -4,7 +4,7 @@
 #include <Poco/Logger.h>
 #include <Poco/NumberParser.h>
 
-#include <Manager.h>
+#include <openzwave/Manager.h>
 
 #include "z-wave/ZWaveMessage.h"
 #include "z-wave/NotificationProcessor.h"
