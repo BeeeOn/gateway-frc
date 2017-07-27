@@ -10,10 +10,8 @@ find_library (POCO_NET PocoNet)
 find_library (POCO_JSON PocoJSON)
 find_library (POCO_XML PocoXML)
 find_library (PTHREAD pthread)
+find_library (OPENZWAVE openzwave)
 find_library (UDEV udev)
-
-find_package(OpenZWave REQUIRED)
-include_directories(${OPENZWAVE_INCLUDE_DIR})
 
 file(GLOB SOURCES
 	${PROJECT_SOURCE_DIR}/commands/DeviceAcceptCommand.cpp
@@ -109,7 +107,7 @@ set(LIBS
 	${POCO_XML}
 	${PTHREAD}
 	${UDEV}
-	${OPENZWAVE_LIBRARY}
+	${OPENZWAVE}
 )
 
 target_link_libraries(beeeon-gateway
