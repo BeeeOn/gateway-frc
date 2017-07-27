@@ -131,10 +131,11 @@ void ZMQBroker::configureDataSockets()
 {
 	m_dataServerSocket.assign(new zmq::socket_t(m_context, ZMQ_ROUTER));
 
-	string address = createAddress(m_dataServerHost, m_dataServerPort);
+	//string address = createAddress(m_dataServerHost, m_dataServerPort);
+	string address = "ipc:///tmp/feeds/0";
 
 	try {
-		m_dataServerSocket->bind("tcp://*:5677");
+		m_dataServerSocket->bind(address);
 
 		if (logger().debug())
 			logger().debug("zmq data server is running on: " + address);
@@ -154,10 +155,11 @@ void ZMQBroker::configureHelloSockets()
 {
 	m_helloServerSocket.assign(new zmq::socket_t(m_context, ZMQ_REP));
 
-	string address = createAddress(m_helloServerHost, m_helloServerPort);
+	//string address = createAddress(m_helloServerHost, m_helloServerPort);
+	string address = "ipc:///tmp/feeds/1";
 
 	try {
-		m_helloServerSocket->bind("tcp://*:5678");
+		m_helloServerSocket->bind(adress);
 
 		if (logger().debug())
 			logger().debug("zmq hello server is running on: " + address);
