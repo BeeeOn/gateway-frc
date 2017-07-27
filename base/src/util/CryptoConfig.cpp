@@ -74,7 +74,7 @@ CryptoParams CryptoConfig::deriveParams(const string &salt) const
 {
 	CryptoParams params = CryptoParams::create(m_algorithm);
 	params.setIterationCount(m_iterationCount);
-	params.setSalt(salt.empty()? salt : CryptoParams::randomString(32));
+	params.setSalt(salt.empty()? CryptoParams::randomString(32) : salt);
 
 	return params;
 }

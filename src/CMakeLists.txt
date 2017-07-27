@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 2.8.11)
 project (gateway-core CXX)
 
+find_library (MOSQUITTO_CPP mosquittopp)
 find_library (POCO_FOUNDATION PocoFoundation)
 find_library (POCO_SSL PocoNetSSL)
 find_library (POCO_CRYPTO PocoCrypto)
@@ -9,80 +10,78 @@ find_library (POCO_NET PocoNet)
 find_library (POCO_JSON PocoJSON)
 find_library (POCO_XML PocoXML)
 find_library (PTHREAD pthread)
-find_library (ZMQ zmq)
-find_library (OPENZWAVE openzwave)
+find_library (UDEV udev)
+
+find_package(OpenZWave REQUIRED)
+include_directories(${OPENZWAVE_INCLUDE_DIR})
 
 file(GLOB SOURCES
+	${PROJECT_SOURCE_DIR}/commands/DeviceAcceptCommand.cpp
 	${PROJECT_SOURCE_DIR}/commands/DeviceSetValueCommand.cpp
-	${PROJECT_SOURCE_DIR}/commands/DeviceSetValueResult.cpp
 	${PROJECT_SOURCE_DIR}/commands/DeviceUnpairCommand.cpp
 	${PROJECT_SOURCE_DIR}/commands/GatewayListenCommand.cpp
+	${PROJECT_SOURCE_DIR}/commands/NewDeviceCommand.cpp
 	${PROJECT_SOURCE_DIR}/commands/ServerDeviceListCommand.cpp
 	${PROJECT_SOURCE_DIR}/commands/ServerDeviceListResult.cpp
 	${PROJECT_SOURCE_DIR}/commands/ServerLastValueCommand.cpp
 	${PROJECT_SOURCE_DIR}/commands/ServerLastValueResult.cpp
-	${PROJECT_SOURCE_DIR}/core/AbstractCollector.cpp
 	${PROJECT_SOURCE_DIR}/core/AbstractDistributor.cpp
 	${PROJECT_SOURCE_DIR}/core/Answer.cpp
 	${PROJECT_SOURCE_DIR}/core/AnswerQueue.cpp
 	${PROJECT_SOURCE_DIR}/core/BasicDistributor.cpp
-	${PROJECT_SOURCE_DIR}/core/CollectorDataValues.cpp
 	${PROJECT_SOURCE_DIR}/core/Command.cpp
 	${PROJECT_SOURCE_DIR}/core/CommandDispatcher.cpp
 	${PROJECT_SOURCE_DIR}/core/CommandHandler.cpp
 	${PROJECT_SOURCE_DIR}/core/CommandProgressHandler.cpp
 	${PROJECT_SOURCE_DIR}/core/CommandRunner.cpp
-	${PROJECT_SOURCE_DIR}/core/DeviceDataCollection.cpp
+	${PROJECT_SOURCE_DIR}/core/CommandSender.cpp
 	${PROJECT_SOURCE_DIR}/core/DeviceManager.cpp
-	${PROJECT_SOURCE_DIR}/core/DistributorListener.cpp
+	${PROJECT_SOURCE_DIR}/core/DongleDeviceManager.cpp
 	${PROJECT_SOURCE_DIR}/core/Exporter.cpp
+	${PROJECT_SOURCE_DIR}/core/ExporterQueue.cpp
+	${PROJECT_SOURCE_DIR}/core/GatewayInfo.cpp
+	${PROJECT_SOURCE_DIR}/core/PocoAnswerImpl.cpp
+	${PROJECT_SOURCE_DIR}/core/PocoCommandDispatcher.cpp
+	${PROJECT_SOURCE_DIR}/core/QueuingDistributor.cpp
 	${PROJECT_SOURCE_DIR}/core/Result.cpp
-	${PROJECT_SOURCE_DIR}/core/SimpleCollector.cpp
 	${PROJECT_SOURCE_DIR}/core/VirtualSensor.cpp
 	${PROJECT_SOURCE_DIR}/credentials/Credentials.cpp
 	${PROJECT_SOURCE_DIR}/credentials/CredentialsStorage.cpp
+	${PROJECT_SOURCE_DIR}/credentials/FileCredentialsStorage.cpp
 	${PROJECT_SOURCE_DIR}/credentials/PasswordCredentials.cpp
 	${PROJECT_SOURCE_DIR}/credentials/PinCredentials.cpp
+	${PROJECT_SOURCE_DIR}/exporters/MosquittoExporter.cpp
 	${PROJECT_SOURCE_DIR}/exporters/NamedPipeExporter.cpp
+	${PROJECT_SOURCE_DIR}/jablotron/JablotronDevice.cpp
+	${PROJECT_SOURCE_DIR}/jablotron/JablotronDeviceAC88.cpp
+	${PROJECT_SOURCE_DIR}/jablotron/JablotronDeviceJA82SH.cpp
+	${PROJECT_SOURCE_DIR}/jablotron/JablotronDeviceJA83P.cpp
+	${PROJECT_SOURCE_DIR}/jablotron/JablotronDeviceJA85ST.cpp
 	${PROJECT_SOURCE_DIR}/jablotron/JablotronDeviceManager.cpp
-	${PROJECT_SOURCE_DIR}/jablotron/SerialControl.cpp
-	${PROJECT_SOURCE_DIR}/model/DeviceManagerID.cpp
-	${PROJECT_SOURCE_DIR}/model/ModuleID.cpp
-	${PROJECT_SOURCE_DIR}/model/SensorValue.cpp
+	${PROJECT_SOURCE_DIR}/jablotron/JablotronDeviceOpenClose.cpp
+	${PROJECT_SOURCE_DIR}/jablotron/JablotronDeviceRC86K.cpp
+	${PROJECT_SOURCE_DIR}/jablotron/JablotronDeviceTP82N.cpp
+	${PROJECT_SOURCE_DIR}/net/AbstractHTTPScanner.cpp
 	${PROJECT_SOURCE_DIR}/net/SOAPMessage.cpp
 	${PROJECT_SOURCE_DIR}/net/UPnP.cpp
-	${PROJECT_SOURCE_DIR}/util/AsyncExecutor.cpp
+	${PROJECT_SOURCE_DIR}/net/VPTHTTPScanner.cpp
+	${PROJECT_SOURCE_DIR}/udev/UDevEvent.cpp
+	${PROJECT_SOURCE_DIR}/udev/UDevListener.cpp
+	${PROJECT_SOURCE_DIR}/udev/UDevMonitor.cpp
 	${PROJECT_SOURCE_DIR}/util/CSVSensorDataFormatter.cpp
-	${PROJECT_SOURCE_DIR}/util/CSVStatisticsFormatter.cpp
+	${PROJECT_SOURCE_DIR}/util/JSONSensorDataFormatter.cpp
 	${PROJECT_SOURCE_DIR}/util/NullSensorDataFormatter.cpp
 	${PROJECT_SOURCE_DIR}/util/SensorDataFormatter.cpp
-	${PROJECT_SOURCE_DIR}/util/StatisticsData.cpp
-	${PROJECT_SOURCE_DIR}/util/StatisticsPrinter.cpp
-	${PROJECT_SOURCE_DIR}/util/ZMQUtil.cpp
 	${PROJECT_SOURCE_DIR}/z-wave/GenericZWaveMessageFactory.cpp
-	${PROJECT_SOURCE_DIR}/z-wave/NotificationProcessor.cpp
+	${PROJECT_SOURCE_DIR}/z-wave/ManufacturerZWaveMessageFactory.cpp
 	${PROJECT_SOURCE_DIR}/z-wave/ZWaveDeviceManager.cpp
+	${PROJECT_SOURCE_DIR}/z-wave/ZWaveDriver.cpp
 	${PROJECT_SOURCE_DIR}/z-wave/ZWaveMessage.cpp
+	${PROJECT_SOURCE_DIR}/z-wave/ZWavePocoLoggerAdapter.cpp
 	${PROJECT_SOURCE_DIR}/z-wave/manufacturers/AeotecZWaveMessageFactory.cpp
-	${PROJECT_SOURCE_DIR}/z-wave/manufacturers/DLinkZWaveMessageFactory.cpp
-	${PROJECT_SOURCE_DIR}/z-wave/manufacturers/FibaroZWaveMessageFactory.cpp
-	${PROJECT_SOURCE_DIR}/z-wave/manufacturers/PhilioZWaveMessageFactory.cpp
-	${PROJECT_SOURCE_DIR}/z-wave/manufacturers/PoppZWaveMessageFactory.cpp
+	${PROJECT_SOURCE_DIR}/z-wave/manufacturers/DefaultZWaveMessageFactory.cpp
 	${PROJECT_SOURCE_DIR}/z-wave/products/AeotecZW100ZWaveMessage.cpp
-	${PROJECT_SOURCE_DIR}/z-wave/products/DLinkDchZ120ZWaveMessage.cpp
-	${PROJECT_SOURCE_DIR}/z-wave/products/FibaroFGK107ZWaveMessage.cpp
-	${PROJECT_SOURCE_DIR}/z-wave/products/PhilioPST021CZWaveMessage.cpp
-	${PROJECT_SOURCE_DIR}/z-wave/products/Popp123601ZWaveMessage.cpp
-	${PROJECT_SOURCE_DIR}/zmq/FakeHandler.cpp
-	${PROJECT_SOURCE_DIR}/zmq/FakeHandlerTest.cpp
-	${PROJECT_SOURCE_DIR}/zmq/ZMQBroker.cpp
-	${PROJECT_SOURCE_DIR}/zmq/ZMQClient.cpp
-	${PROJECT_SOURCE_DIR}/zmq/ZMQConnector.cpp
-	${PROJECT_SOURCE_DIR}/zmq/ZMQDeviceManagerTable.cpp
-	${PROJECT_SOURCE_DIR}/zmq/ZMQMessage.cpp
-	${PROJECT_SOURCE_DIR}/zmq/ZMQMessageError.cpp
-	${PROJECT_SOURCE_DIR}/zmq/ZMQMessageType.cpp
-	${PROJECT_SOURCE_DIR}/zmq/ZMQMessageValueType.cpp
+	${PROJECT_SOURCE_DIR}/z-wave/products/DefaultZWaveMessage.cpp
 )
 
 file(GLOB TESTING_SOURCES
@@ -100,6 +99,7 @@ add_library(BeeeOnTesting ${TESTING_SOURCES})
 add_executable(beeeon-gateway main.cpp)
 
 set(LIBS
+	${MOSQUITTO_CPP}
 	${POCO_FOUNDATION}
 	${POCO_SSL}
 	${POCO_CRYPTO}
@@ -108,8 +108,8 @@ set(LIBS
 	${POCO_JSON}
 	${POCO_XML}
 	${PTHREAD}
-	${ZMQ}
-	${OPENZWAVE}
+	${UDEV}
+	${OPENZWAVE_LIBRARY}
 )
 
 target_link_libraries(beeeon-gateway

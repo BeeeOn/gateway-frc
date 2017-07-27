@@ -42,6 +42,16 @@ const string &DeviceInfo::vendor() const
 	return m_vendor;
 }
 
+void DeviceInfo::setDisplayVendor(const string &vendor)
+{
+	m_displayVendor = vendor;
+}
+
+const string &DeviceInfo::displayVendor() const
+{
+	return m_displayVendor;
+}
+
 bool DeviceInfo::add(const ModuleInfo &info)
 {
 	if (m_modules.find(info) != m_modules.end())

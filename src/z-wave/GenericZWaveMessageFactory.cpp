@@ -1,27 +1,52 @@
 #include <string>
 
+#include "di/Injectable.h"
 #include "z-wave/GenericZWaveMessageFactory.h"
+#include "z-wave/ManufacturerZWaveMessageFactory.h"
+#include "z-wave/manufacturers/DefaultZWaveMessageFactory.h"
 
 using namespace BeeeOn;
-using std::to_string;
+using namespace Poco;
+using namespace std;
 
-ZWaveMessage *GenericZWaveMessageFactory::create(uint32_t manufacturer,
-	uint32_t product)
+BEEEON_OBJECT_BEGIN(BeeeOn, GenericZWaveMessageFactory)
+BEEEON_OBJECT_CASTABLE(ZWaveMessageFactory)
+BEEEON_OBJECT_REF("registerManufacturer", &GenericZWaveMessageFactory::registerManufacturer)
+BEEEON_OBJECT_REF("defaultManufacturer", &GenericZWaveMessageFactory::registerDefaultManufacturer)
+BEEEON_OBJECT_END(BeeeOn, GenericZWaveMessageFactory)
+
+ZWaveMessage::Ptr GenericZWaveMessageFactory::create(
+		uint32_t manufacturer, uint32_t product)
 {
 	auto search = m_manufacturers.find(manufacturer);
-
 	if (search != m_manufacturers.end())
 		return search->second->create(manufacturer, product);
 
-	throw Poco::Exception("Manufacturer " + to_string(manufacturer)
+	logger().warning(
+		"manufacturer " + to_string(manufacturer)
 		+ " is not registered");
+
+	if (m_defaultManufacturer.isNull()) {
+		throw InvalidArgumentException(
+			"default manufacturer is not registered");
+	}
+
+	return m_defaultManufacturer->create(manufacturer, product);
 }
 
-void GenericZWaveMessageFactory::registerManufacturer(uint32_t manufacturer,
-		Poco::SharedPtr<ZWaveMessageFactory> factory)
+void GenericZWaveMessageFactory::registerManufacturer(
+		SharedPtr<ZWaveMessageFactory> factory)
 {
-	if (factory.isNull())
-		throw Poco::NullPointerException("null pointer to Z-Wave factory");
+	m_manufacturers.insert(
+		make_pair(
+			factory.cast<ManufacturerZWaveMessageFactory>()->manufacturer(),
+			factory
+		)
+	);
+}
 
-	m_manufacturers.insert(std::make_pair(manufacturer, factory));
+void GenericZWaveMessageFactory::registerDefaultManufacturer(
+	SharedPtr<ZWaveMessageFactory> factory)
+{
+	m_defaultManufacturer = factory;
 }

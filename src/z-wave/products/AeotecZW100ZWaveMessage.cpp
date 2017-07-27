@@ -4,29 +4,27 @@
 
 #include "z-wave/products/AeotecZW100ZWaveMessage.h"
 
-#define PIR_SENSOR_ACTUATOR        6
-#define PIR_SENSOR_INDEX           4
-#define SENSOR_PIR_INTENSITY       2
-#define SENSOR_INDEX_REFRESH_TIME  111
+static const int PIR_SENSOR_ACTUATOR = 6;
+static const int PIR_SENSOR_INDEX = 4;
+static const int SENSOR_PIR_INTENSITY = 2;
+static const int SENSOR_INDEX_REFRESH_TIME = 111;
 
-#define SHAKE    3
-#define MOTION   8
-#define IDLE     0
+static const int SHAKE = 3;
+static const int MOTION = 8;
+static const int IDLE = 0;
 
-#define MODULE_SHAKE_SENSOR            0
-#define MODULE_PIR_SENSOR              1
-#define MODULE_ULTRAVIOLET             2
-#define MODULE_LIGHT                   3
-#define MODULE_ROOM_TEMPERATURE        4
-#define MODULE_ROOM_HUMIDITY           5
-#define MODULE_PIR_SENSOR_SENSITIVITY  6
-#define MODULE_BATTERY                 7
-#define MODULE_REFRESH_TIME            8
+static const int MODULE_SHAKE_SENSOR = 0;
+static const int MODULE_PIR_SENSOR = 1;
+static const int MODULE_ULTRAVIOLET = 2;
+static const int MODULE_LIGHT = 3;
+static const int MODULE_ROOM_TEMPERATURE = 4;
+static const int MODULE_ROOM_HUMIDITY = 5;
+static const int MODULE_PIR_SENSOR_SENSITIVITY = 6;
+static const int MODULE_BATTERY = 7;
+static const int MODULE_REFRESH_TIME = 8;
 
 using namespace BeeeOn;
-using std::string;
-using std::to_string;
-using std::vector;
+using namespace std;
 
 AeotecZW100ZWaveMessage::AeotecZW100ZWaveMessage()
 {
@@ -39,73 +37,72 @@ SensorData AeotecZW100ZWaveMessage::extractValues(
 	SensorData sensorData;
 	string value;
 
-	if (getUltraviolet(value, zwaveValues))
+	if (parseUltraviolet(value, zwaveValues))
 		sensorData.insertValue(SensorValue(
 			ModuleID(MODULE_ULTRAVIOLET),
 			Poco::NumberParser::parseFloat(value)));
 
-	if (getLuminance(value, zwaveValues))
+	if (parseLuminance(value, zwaveValues))
 		sensorData.insertValue(SensorValue(
 			ModuleID(MODULE_LIGHT),
 			Poco::NumberParser::parseFloat(value)));
 
-	if (getTemperature(value, zwaveValues))
+	if (parseTemperature(value, zwaveValues))
 		sensorData.insertValue(SensorValue(
 			ModuleID(MODULE_ROOM_TEMPERATURE),
 			Poco::NumberParser::parseFloat(value)));
 
-	if (getHumidity(value, zwaveValues))
+	if (parseHumidity(value, zwaveValues))
 		sensorData.insertValue(SensorValue(
 			ModuleID(MODULE_ROOM_HUMIDITY),
 			Poco::NumberParser::parseFloat(value)));
 
-	if (getPirSensitivity(value, zwaveValues))
+	if (extractPirSensitivity(value, zwaveValues))
 		sensorData.insertValue(SensorValue(
 			ModuleID(MODULE_PIR_SENSOR_SENSITIVITY),
 			Poco::NumberParser::parseFloat(value)
 		));
 
-	if (getBatteryLevel(value, zwaveValues))
+	if (parseBatteryLevel(value, zwaveValues))
 		sensorData.insertValue(SensorValue(
 			ModuleID(MODULE_BATTERY),
 		Poco::NumberParser::parseFloat(value)));
 
-	if (getRefreshTime(value, zwaveValues))
+	if (extractRefreshTime(value, zwaveValues))
 		sensorData.insertValue(SensorValue(
 			ModuleID(MODULE_REFRESH_TIME),
 			Poco::NumberParser::parseFloat(value)));
 
-	getDetectionSensor(sensorData, zwaveValues);
+	extractDetectionSensor(sensorData, zwaveValues);
 
 	return sensorData;
 }
 
-void AeotecZW100ZWaveMessage::setValue(const SensorData &sensorData,
-	const uint8_t &nodeId)
+bool AeotecZW100ZWaveMessage::modifyValue(const ModuleID &moduleID,
+	double value, const uint8_t nodeId)
 {
-	std::string value;
-	for (auto data : sensorData) {
-		if (data.moduleID().value() == PIR_SENSOR_ACTUATOR) {
-			int actuatorValue = int(data.value());
-			auto search = m_pirSensor.find(to_string(actuatorValue));
+	if (moduleID.value() == PIR_SENSOR_ACTUATOR) {
+		int actuatorValue = value;
 
-			if (search == m_pirSensor.end())
-				return;
+		auto search = m_pirSensor.find(to_string(actuatorValue));
+		if (search == m_pirSensor.end())
+			return false;
 
-			setActuator(search->second, COMMAND_CLASS_CONFIGURATION,
-				PIR_SENSOR_INDEX, nodeId);
-		}
-		else if (data.moduleID().value() == MODULE_REFRESH_TIME) {
-			setActuator(std::to_string(data.value()), COMMAND_CLASS_CONFIGURATION,
-				SENSOR_INDEX_REFRESH_TIME, nodeId);
-		}
+		setActuator(search->second, COMMAND_CLASS_CONFIGURATION,
+			PIR_SENSOR_INDEX, nodeId);
 	}
+	else if (moduleID.value() == MODULE_REFRESH_TIME) {
+		return setActuator(std::to_string(value), COMMAND_CLASS_CONFIGURATION,
+			SENSOR_INDEX_REFRESH_TIME, nodeId);
+	}
+
+	return false;
 }
 
-bool AeotecZW100ZWaveMessage::getPirSensitivity(string& value,
+bool AeotecZW100ZWaveMessage::extractPirSensitivity(string &value,
 	const vector<ZWaveSensorValue> &zwaveValues)
 {
-	if (!getSpecificValue(value, COMMAND_CLASS_CONFIGURATION,
+	if (!extractSpecificValue(value, COMMAND_CLASS_CONFIGURATION,
 		PIR_SENSOR_INDEX, zwaveValues))
 		return false;
 
@@ -119,21 +116,20 @@ bool AeotecZW100ZWaveMessage::getPirSensitivity(string& value,
 	return false;
 }
 
-bool AeotecZW100ZWaveMessage::getRefreshTime(string& value,
+bool AeotecZW100ZWaveMessage::extractRefreshTime(string &value,
 	const vector<ZWaveSensorValue> &zwaveValues)
 {
-	return getSpecificValue(value, COMMAND_CLASS_CONFIGURATION,
+	return extractSpecificValue(value, COMMAND_CLASS_CONFIGURATION,
 	SENSOR_INDEX_REFRESH_TIME, zwaveValues);
 }
 
-void AeotecZW100ZWaveMessage::getDetectionSensor(SensorData &sensorData,
+void AeotecZW100ZWaveMessage::extractDetectionSensor(SensorData &sensorData,
 	const vector<ZWaveSensorValue> &zwaveValues)
 {
 	int sensorState = 0;
 
 	for (const ZWaveSensorValue &item : zwaveValues) {
-		if (!isEqual(item.commandClass, COMMAND_CLASS_ALARM, item.index,
-				SENSOR_INDEX_BULGAR))
+		if (!isEqual(item, COMMAND_CLASS_ALARM, SENSOR_INDEX_BULGAR))
 			continue;
 
 		if (!extractInt(sensorState, item))
@@ -160,11 +156,12 @@ void AeotecZW100ZWaveMessage::setMapValue()
 	m_pirSensor.insert(std::make_pair("5", "Enabled level 5 (maximum sensitivity)"));
 }
 
-int AeotecZW100ZWaveMessage::getDeviceID()
+void AeotecZW100ZWaveMessage::modifyValueAfterStart()
 {
-	return DEVICE_ID_AEOTEC_ZW100;
 }
 
-void AeotecZW100ZWaveMessage::setAfterStart()
+list<ModuleType> AeotecZW100ZWaveMessage::moduleTypes(
+	const vector<ZWaveSensorValue> &)
 {
+	return list<ModuleType>();
 }

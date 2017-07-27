@@ -6,8 +6,7 @@
 
 namespace BeeeOn {
 
-#define AEOTEC_ZW100              0x0064
-#define DEVICE_ID_AEOTEC_ZW100    27
+const static int AEOTEC_ZW100 = 0x0064;
 
 class AeotecZW100ZWaveMessage : public ZWaveMessage {
 public:
@@ -16,25 +15,26 @@ public:
 	SensorData extractValues(
 		const std::vector<ZWaveSensorValue> &zwaveValues) override;
 
-	void setValue(const SensorData &sensorData,
-		const uint8_t &nodeId) override;
+	bool modifyValue(const ModuleID &moduleID, double value,
+		const uint8_t nodeId) override;
 
-	void setAfterStart() override;
+	void modifyValueAfterStart() override;
 
-	int getDeviceID() override;
+	std::list<ModuleType> moduleTypes(
+		const std::vector<ZWaveSensorValue> &zwaveValues) override;
 
 private:
 	std::map<std::string, std::string> m_pirSensor;
 
 	void setMapValue();
 
-	bool getPirSensitivity(std::string& value,
+	bool extractPirSensitivity(std::string &value,
 		const std::vector<ZWaveSensorValue> &zwaveValues);
 
-	bool getRefreshTime(std::string& value,
+	bool extractRefreshTime(std::string &value,
 		const std::vector<ZWaveSensorValue> &zwaveValues);
 
-	void getDetectionSensor(SensorData &sensorData,
+	void extractDetectionSensor(SensorData &sensorData,
 		const std::vector<ZWaveSensorValue> &zwaveValues);
 };
 

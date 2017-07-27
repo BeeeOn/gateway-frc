@@ -15,23 +15,30 @@ add_definitions(-std=c++11)
 add_definitions(-Wall -pedantic -Wextra)
 
 file(GLOB TEST_LIBRARY_SOURCES
-	${PROJECT_SOURCE_DIR}/cppunit/TapTestProducer.cpp
+	${PROJECT_SOURCE_DIR}/cppunit/TapOutputter.cpp
 )
 
 file(GLOB TEST_SOURCES
 	${PROJECT_SOURCE_DIR}/di/DependencyInjectorTest.cpp
 	${PROJECT_SOURCE_DIR}/di/DIWrapperTest.cpp
 	${PROJECT_SOURCE_DIR}/di/DIDaemonTest.cpp
+	${PROJECT_SOURCE_DIR}/io/AutoCloseTest.cpp
 	${PROJECT_SOURCE_DIR}/io/ConsoleTest.cpp
 	${PROJECT_SOURCE_DIR}/io/TCPConsoleTest.cpp
 	${PROJECT_SOURCE_DIR}/loop/LoopRunnerTest.cpp
+	${PROJECT_SOURCE_DIR}/math/SimpleCalcTest.cpp
 	${PROJECT_SOURCE_DIR}/model/GatewayIDTest.cpp
 	${PROJECT_SOURCE_DIR}/model/DeviceIDTest.cpp
+	${PROJECT_SOURCE_DIR}/model/ModuleTypeTest.cpp
+	${PROJECT_SOURCE_DIR}/net/IPAddressRangeTest.cpp
+	${PROJECT_SOURCE_DIR}/net/MACAddressTest.cpp
+	${PROJECT_SOURCE_DIR}/util/ArgsParserTest.cpp
 	${PROJECT_SOURCE_DIR}/util/BacktraceTest.cpp
 	${PROJECT_SOURCE_DIR}/util/ClassInfoTest.cpp
 	${PROJECT_SOURCE_DIR}/util/DAMMTest.cpp
 	${PROJECT_SOURCE_DIR}/util/EnumTest.cpp
 	${PROJECT_SOURCE_DIR}/util/Base64Test.cpp
+	${PROJECT_SOURCE_DIR}/util/HashedLockTest.cpp
 	${PROJECT_SOURCE_DIR}/util/SecureXmlParserTest.cpp
 	${PROJECT_SOURCE_DIR}/util/TypesSAXHandlerTest.cpp
 	${PROJECT_SOURCE_DIR}/util/DevicesSAXHandlerTest.cpp

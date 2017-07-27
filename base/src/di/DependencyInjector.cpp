@@ -1,10 +1,16 @@
+#include <list>
+
 #include <Poco/Exception.h>
+#include <Poco/StringTokenizer.h>
+#include <Poco/Dynamic/Var.h>
 
 #include "di/DependencyInjector.h"
+#include "math/SimpleCalc.h"
 #include "Debug.h"
 
 using namespace std;
 using namespace Poco;
+using namespace Poco::Dynamic;
 using namespace Poco::Util;
 using namespace BeeeOn;
 
@@ -192,13 +198,8 @@ DIWrapper *DependencyInjector::createNew(const InstanceInfo &info)
 
 	logger().debug("creating " + info.name() + " as " + cls);
 
-	Manifest<DIWrapper>::Iterator it =
-		ManifestSingleton::manifest().find(cls + "DIW");
-
-	if (it == ManifestSingleton::manifest().end())
-		throw NotFoundException("missing class " + cls);
-
-	return it->create();
+	DIWrapperFactory &factory = DIWrapperFactory::lookupFactory(cls + "DIW");
+	return factory.create();
 }
 
 bool DependencyInjector::tryInjectRef(
@@ -242,7 +243,9 @@ bool DependencyInjector::tryInjectNumber(
 		const string &name)
 {
 	if (m_conf->has(key + "[@number]")) {
-		const int value = m_conf->getInt(key + "[@number]");
+		SimpleCalc calc;
+		const string &tmp = m_conf->getString(key + "[@number]");
+		const int value = static_cast<int>(calc.evaluate(tmp));
 
 		logger().debug("injecting number " + to_string(value)
 				+ " as " + name + " into " + info.name());
@@ -273,6 +276,81 @@ bool DependencyInjector::tryInjectText(
 	return false;
 }
 
+bool DependencyInjector::tryInjectList(
+		const InstanceInfo &info,
+		DIWrapper *target,
+		const string &key,
+		const string &name)
+{
+	if (m_conf->has(key + "[@list]")) {
+		const string value = m_conf->getString(key + "[@list]");
+
+		logger().debug("injecting " + value + " as " + name
+				+ " into " + info.name());
+
+		StringTokenizer tokenizer(value, ",;",
+				StringTokenizer::TOK_TRIM);
+		list<Var> tmp;
+		for (const auto &s : tokenizer)
+			tmp.push_back(s);
+
+		target->injectList(name, tmp);
+		return true;
+	}
+
+	return false;
+}
+
+bool DependencyInjector::tryInjectMap(
+		const InstanceInfo &info,
+		DIWrapper *target,
+		const string &key,
+		const string &name)
+{
+	if (!m_conf->has(key + ".pair") && !m_conf->has(key + ".pair[1]"))
+		return false;
+
+	AbstractConfiguration::Keys keys;
+	m_conf->keys(key, keys);
+
+	map<Var, Var> m;
+
+	for (auto &pair : keys) {
+		if (!m_conf->has(key + "." + pair + "[@key]")) {
+			logger().warning("missing attribute @key for "
+				+ key + "." + pair);
+			continue;
+		}
+
+		if (!m_conf->has(key + "." + pair + "[@text]")) {
+			logger().error("missing attribute @text for "
+				+ key + "." + pair);
+			return false;
+		}
+
+		const string &mapKey = m_conf->getString(
+				key + "." + pair + "[@key]");
+		const string &mapText = m_conf->getString(
+				key + "." + pair + "[@text]");
+
+		logger().debug("map pair " + mapKey + " -> " + mapText,
+			       __FILE__, __LINE__);
+
+		if (!m.emplace(mapKey, mapText).second) {
+			throw InvalidArgumentException(
+				"duplicate map key " + mapKey + " for " + key
+				+ " when injecting into " + info.name()
+			);
+		}
+	}
+
+	logger().debug("injecting map " + name + " into " + info.name(),
+			__FILE__, __LINE__);
+
+	target->injectMap(name, m);
+	return true;
+}
+
 void DependencyInjector::injectValue(
 		const InstanceInfo &info,
 		DIWrapper *target,
@@ -286,6 +364,12 @@ void DependencyInjector::injectValue(
 		return;
 
 	if (tryInjectText(info, target, key, name))
+		return;
+
+	if (tryInjectList(info, target, key, name))
+		return;
+
+	if (tryInjectMap(info, target, key, name))
 		return;
 
 	logger().error("malformed configuration entry "

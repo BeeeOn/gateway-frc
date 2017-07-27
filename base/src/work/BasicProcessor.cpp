@@ -4,17 +4,18 @@
 
 #include "di/Injectable.h"
 #include "work/BasicProcessor.h"
-#include "work/WorkAccess.h"
+#include "work/WorkBackup.h"
 #include "work/WorkExecutor.h"
-#include "work/WorkRepository.h"
+#include "work/WorkLockManager.h"
 #include "work/WorkRunner.h"
 #include "work/WorkScheduler.h"
 
 BEEEON_OBJECT_BEGIN(BeeeOn, BasicProcessor)
 BEEEON_OBJECT_CASTABLE(WorkScheduler)
 BEEEON_OBJECT_CASTABLE(StoppableRunnable)
-BEEEON_OBJECT_REF("repository", &BasicProcessor::setRepository)
+BEEEON_OBJECT_REF("backup", &BasicProcessor::setBackup)
 BEEEON_OBJECT_REF("runnerFactory", &BasicProcessor::setRunnerFactory)
+BEEEON_OBJECT_REF("lockManager", &BasicProcessor::setLockManager)
 BEEEON_OBJECT_REF("executors", &BasicProcessor::registerExecutor)
 BEEEON_OBJECT_NUMBER("minThreads", &BasicProcessor::setMinThreads)
 BEEEON_OBJECT_NUMBER("maxThreads", &BasicProcessor::setMaxThreads)
@@ -27,7 +28,7 @@ using namespace Poco;
 using namespace BeeeOn;
 
 BasicProcessor::BasicProcessor():
-	m_repository(&EmptyWorkRepository::instance()),
+	m_backup(&EmptyWorkBackup::instance()),
 	m_runnerFactory(&NullWorkRunnerFactory::instance()),
 	m_shouldStop(0),
 	m_current(NULL),
@@ -37,14 +38,19 @@ BasicProcessor::BasicProcessor():
 {
 }
 
-void BasicProcessor::setRepository(WorkRepository *repository)
+void BasicProcessor::setBackup(WorkBackup *backup)
 {
-	m_repository = repository? repository : &EmptyWorkRepository::instance();
+	m_backup = backup? backup : &EmptyWorkBackup::instance();
 }
 
 void BasicProcessor::setRunnerFactory(WorkRunnerFactory *factory)
 {
 	m_runnerFactory = factory? factory : &NullWorkRunnerFactory::instance();
+}
+
+void BasicProcessor::setLockManager(WorkLockManager *manager)
+{
+	m_lockManager = manager;
 }
 
 void BasicProcessor::setMinThreads(int min)
@@ -91,7 +97,7 @@ void BasicProcessor::init()
 void BasicProcessor::initQueue()
 {
 	vector<Work::Ptr> all;
-	m_repository->loadScheduled(all);
+	m_backup->loadScheduled(all);
 
 	FastMutex::ScopedLock guard(m_queue.lock());
 
@@ -107,12 +113,13 @@ void BasicProcessor::initQueue()
 			// initialization when the BasicProcessor is inactive.
 
 			work->setState(Work::STATE_FAILED);
-			m_repository->store(work);
+			m_backup->store(work);
 			continue;
 		}
 		else if (work->state() >= Work::STATE_FINISHED)
 			continue;
 
+		WorkWriteGuard guard(m_lockManager->readWrite(work->id()));
 		m_queue.pushUnlocked(work);
 	}
 }
@@ -219,7 +226,7 @@ void BasicProcessor::dispatch()
 				__FILE__, __LINE__);
 
 		work->setState(Work::STATE_FAILED);
-		m_repository->store(work);
+		m_backup->store(work);
 		return;
 	}
 
@@ -245,7 +252,7 @@ void BasicProcessor::execute(WorkExecutor *executor, Work::Ptr work)
 
 	runner->setExecutor(executor);
 	runner->setWork(work);
-	runner->setRepository(m_repository);
+	runner->setBackup(m_backup);
 
 	try {
 		while (!executeInThread(*runner, "Work:" + *work)) {
@@ -282,9 +289,10 @@ void BasicProcessor::schedule(Work::Ptr work)
 	}
 
 	FastMutex::ScopedLock guard(m_queue.lock());
+	WorkWriteGuard workGuard(m_lockManager->readWrite(work->id()));
 
 	m_queue.pushUnlocked(work);
-	m_repository->store(work);
+	m_backup->store(work);
 
 	wakeUpSelf();
 }
@@ -297,9 +305,10 @@ void BasicProcessor::wakeup(Work::Ptr work)
 	}
 
 	FastMutex::ScopedLock guard(m_queue.lock());
+	WorkWriteGuard workGuard(m_lockManager->readWrite(work->id()));
 
 	m_queue.wakeupUnlocked(work);
-	m_repository->store(work);
+	m_backup->store(work);
 
 	wakeUpSelf();
 }
@@ -314,11 +323,11 @@ void BasicProcessor::cancel(Work::Ptr work)
 	FastMutex::ScopedLock guard(m_queue.lock());
 
 	// lock the work to cancel it safely
-	WorkWriting accessGuard(work, __FILE__, __LINE__);
+	WorkWriteGuard workGuard(m_lockManager->readWrite(work->id()));
 
 	m_queue.cancelUnlocked(work);
-	work->setState(Work::STATE_CANCELED, accessGuard);
-	m_repository->store(work);
+	work->setState(Work::STATE_CANCELED);
+	m_backup->store(work);
 
 	wakeUpSelf();
 }

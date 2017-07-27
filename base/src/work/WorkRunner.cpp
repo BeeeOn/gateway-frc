@@ -2,16 +2,18 @@
 #include <Poco/Exception.h>
 
 #include "work/WorkRunner.h"
+#include "work/WorkBackup.h"
 #include "work/WorkExecutor.h"
-#include "work/WorkRepository.h"
+#include "work/WorkLockManager.h"
 
 using namespace Poco;
 using namespace BeeeOn;
 
-WorkRunner::WorkRunner(WorkScheduler &scheduler):
+WorkRunner::WorkRunner(WorkScheduler &scheduler, WorkLockManager &lockManager):
 	m_scheduler(scheduler),
 	m_executor(&NullWorkExecutor::instance()),
-	m_repository(&EmptyWorkRepository::instance())
+	m_backup(&EmptyWorkBackup::instance()),
+	m_lockManager(lockManager)
 {
 }
 
@@ -29,9 +31,9 @@ void WorkRunner::setWork(Work::Ptr work)
 	m_work = work;
 }
 
-void WorkRunner::setRepository(WorkRepository *repository)
+void WorkRunner::setBackup(WorkBackup *backup)
 {
-	m_repository = repository? repository : &EmptyWorkRepository::instance();
+	m_backup = backup? backup : &EmptyWorkBackup::instance();
 }
 
 void WorkRunner::destroySelf()
@@ -41,6 +43,11 @@ void WorkRunner::destroySelf()
 
 WorkRunnerFactory::~WorkRunnerFactory()
 {
+}
+
+void WorkRunnerFactory::setLockManager(WorkLockManager *manager)
+{
+	m_lockManager = manager;
 }
 
 WorkRunner *NullWorkRunnerFactory::create(WorkScheduler &)

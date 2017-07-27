@@ -1,0 +1,1 @@
+2017-07-27 09:29:42.455 Always, OpenZwave Version 1.4.2568 Starting Up

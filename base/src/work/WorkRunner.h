@@ -7,18 +7,19 @@
 
 namespace BeeeOn {
 
+class WorkBackup;
 class WorkExecutor;
-class WorkRepository;
+class WorkLockManager;
 class WorkScheduler;
 
 class WorkRunner : public Poco::Runnable {
 public:
-	WorkRunner(WorkScheduler &scheduler);
+	WorkRunner(WorkScheduler &scheduler, WorkLockManager &lockManager);
 	virtual ~WorkRunner();
 
 	void setExecutor(WorkExecutor *executor);
 	void setWork(Work::Ptr work);
-	void setRepository(WorkRepository *repository);
+	void setBackup(WorkBackup *backup);
 
 protected:
 	virtual void destroySelf();
@@ -26,7 +27,8 @@ protected:
 protected:
 	WorkScheduler &m_scheduler;
 	WorkExecutor *m_executor;
-	WorkRepository *m_repository;
+	WorkBackup *m_backup;
+	WorkLockManager &m_lockManager;
 	Work::Ptr m_work;
 };
 
@@ -39,6 +41,11 @@ public:
 	 */
 	virtual WorkRunner *create(
 			WorkScheduler &scheduler) = 0;
+
+	void setLockManager(WorkLockManager *manager);
+
+protected:
+	WorkLockManager *m_lockManager;
 };
 
 class NullWorkRunnerFactory : public WorkRunnerFactory {

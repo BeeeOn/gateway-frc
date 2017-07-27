@@ -5,37 +5,31 @@
 			<add name="runnables" ref="virtualSensor2" if-yes="${virtual-sensor2.enable}" />
 			<add name="runnables" ref="virtualSensor3" if-yes="${virtual-sensor3.enable}" />
 			<add name="runnables" ref="testingCenter" if-yes="${testing.center.enable}" />
-			<add name="runnables" ref="asyncExecutor" />
-			<add name="runnables" ref="collector" />
-			<add name="runnables" ref="zmqBroker" />
+			<add name="runnables" ref="udevMonitor" />
+			<add name="runnables" ref="zwaveDeviceManager" if-yes="${zwave.enable}" />
+			<add name="runnables" ref="jablotronDeviceManager" if-yes="${jablotron.enable}" />
 		</instance>
 
-		<instance name="csvStatisticsFormatter" class="BeeeOn::CSVStatisticsFormatter">
-			<set name="separator" text=";"/>
-		</instance>
-
-		<instance name="statisticsPrinter" class="BeeeOn::StatisticsPrinter">
-			<set name="formatter" ref="csvStatisticsFormatter"/>
-			<set name="outputFile" text="/tmp/beeeon-gateway-statistics.csv"/>
-		</instance>
-
-		<instance name="asyncExecutor" class="BeeeOn::AsyncExecutor">
-		</instance>
-
-		<instance name="collector" class="BeeeOn::SimpleCollector">
-			<set name="exportInterval" number="30"/>
-			<set name="printer" ref="statisticsPrinter"/>
+		<instance name="gatewayInfo" class="BeeeOn::GatewayInfo">
+			<set name="loadCertificate" text="${ssl.certificate.filePath}" />
+			<set name="loadPrivateKey" text="${ssl.privateKey.filePath}" />
 		</instance>
 
 		<instance name="distributor" class="BeeeOn::BasicDistributor">
 			<set name="exporter" ref="namedPipeExporter" if-yes="${exporter.pipe.enable}"/>
-			<set name="executor" ref="asyncExecutor"/>
-			<add name="listener" ref="collector"/>
+			<set name="exporter" ref="mosquittoExporter" if-yes="${exporter.mqtt.enable}"/>
 		</instance>
 
-		<instance name="commandDispatcher" class="BeeeOn::CommandDispatcher">
-			<set name="registerHandler" ref="fakeHandlerTest"/>
-			<set name="registerHandler" ref="zmqBroker"/>
+		<instance name="commandDispatcher" class="BeeeOn::PocoCommandDispatcher">
+			<set name="registerHandler" ref="testingCenter" if-yes="${testing.center.enable}"/>
+			<set name="registerHandler" ref="zwaveDeviceManager" if-yes="${zwave.enable}" />
+			<set name="registerHandler" ref="jablotronDeviceManager" if-yes="${jablotron.enable}"/>
+		</instance>
+
+		<instance name="udevMonitor" class="BeeeOn::UDevMonitor">
+			<set name="matches" list="bluetooth,tty" />
+			<set name="listeners" ref="zwaveDeviceManager" if-yes="${zwave.enable}" />
+			<set name="listeners" ref="jablotronDeviceManager" if-yes="${jablotron.enable}"/>
 		</instance>
 
 		<instance name="virtualSensor1" class="BeeeOn::VirtualSensor">
@@ -71,47 +65,46 @@
 		<instance name="testingCenter" class="BeeeOn::TestingCenter">
 			<set name="commandDispatcher" ref="commandDispatcher" />
 			<set name="console" ref="testingConsole" />
+			<set name="credentialsStorage" ref="credentialsStorage" />
+			<set name="cryptoConfig" ref="cryptoConfig" />
 		</instance>
 
-		<instance name="fakeHandlerTest" class="BeeeOn::FakeHandlerTest">
-			<set name="commandDispatcher" ref="commandDispatcher"/>
-			<set name="setAction" text="${command.action}" />
-			<set name="setParameter1" text="${command.parameter1}" />
-			<set name="setParameter2" text="${command.parameter2}" />
-			<set name="setParameter3" text="${command.parameter3}" />
-			<set name="setParameter4" text="${command.parameter4}" />
-			<set name="setRunTime" number="${command.run_time}" />
-			<set name="setPrefixName" text="${command.prefix}" />
-			<set name="setAC881" text="${jablotron-ac88-1.device}" />
-			<set name="setAC881LastValue" number="${jablotron-ac88-1.last_value}" />
-			<set name="setAC882" text="${jablotron-ac88-2.device}" />
-			<set name="setAC882LastValue" number="${jablotron-ac88-2.last_value}" />
-			<set name="setJA81M" text="${jablotron-ja81m.device}" />
-			<set name="setJA82SH" text="${jablotron-ja82sh.device}" />
-			<set name="setJA83M" text="${jablotron-ja83m.device}" />
-			<set name="setJA83P" text="${jablotron-ja83p.device}" />
-			<set name="setJA85ST" text="${jablotron-ja85st.device}" />
-			<set name="setRC86K" text="${jablotron-rc86k.device}" />
-			<set name="setTP82N" text="${jablotron-tp82n.device}" />
-			<set name="setAeotec" text="${zwave-aeotec.device}" />
-			<set name="setAeotecPirSensorLastValue" number="${zwave-aeotec.last_value_pir_sensor}" />
-			<set name="setAeotecRefreshTimeLastValue" number="${zwave-aeotec.last_value_refresh_time}" />
-			<set name="setDLink" text="${zwave-dlink.device}" />
-			<set name="setDLinkLastState" number="${zwave-dlink.last_value}" />
-			<set name="setFibaro" text="${zwave-fibaro.device}" />
-			<set name="setPhilio" text="${zwave-philio.device}" />
-			<set name="setPopp" text="${zwave-popp.device}" />
-			<set name="setPoppLastState" number="${zwave-popp.last_state}" />
+		<instance name="credentialsStorage" class="BeeeOn::FileCredentialsStorage" init="early">
+			<set name="file" text="${credentials.file}" />
+			<set name="configurationRoot" text="${credentials.configuration.root}" />
+			<set name="saveDelayTime" number="${credentials.save.delay}" />
 		</instance>
 
-		<instance name="zmqBroker" class="BeeeOn::ZMQBroker">
-			<set name="dataServerHost" text="${zmq-broker.data.server.host}" />
-			<set name="dataServerPort" number="${zmq-broker.data.server.port}" />
-			<set name="helloServerHost" text="${zmq-broker.hello.server.host}" />
-			<set name="helloServerPort" number="${zmq-broker.hello.server.port}" />
-			<set name="distributor" ref="distributor"/>
-			<set name="commandDispatcher" ref="commandDispatcher"/>
-			<set name="fakeHandlerTest" ref="fakeHandlerTest"/>
+		<instance name="cryptoConfig" class="BeeeOn::CryptoConfig">
+			<set name="passphrase" text="${credentials.crypto.passphrase}" />
+			<set name="algorithm" text="${credentials.crypto.algorithm}" />
+		</instance>
+
+		<instance name="zwaveDeviceManager" class="BeeeOn::ZWaveDeviceManager">
+			<set name="userPath" text="${zwave.user.path}" />
+			<set name="configPath" text="${zwave.config.path}" />
+			<set name="pollInterval" number="${zwave.poll.interval}" />
+			<set name="commandDispatcher" ref="commandDispatcher" />
+			<set name="distributor" ref="distributor" />
+			<!-- <set name="gatewayInfo" ref="gatewayInfo" /> -->
+			<set name="messageFactory" ref="zwaveMessageFactory" />
+		</instance>
+
+		<instance name="zwaveMessageFactory" class="BeeeOn::GenericZWaveMessageFactory">
+			<set name="defaultManufacturer" ref="defaultZWaveMessageFactory" />
+			<set name="registerManufacturer" ref="aeotecZWaveMessageFactory" />
+		</instance>
+
+		<instance name="defaultZWaveMessageFactory" class="BeeeOn::DefaultZWaveMessageFactory">
+		</instance>
+
+		<instance name="aeotecZWaveMessageFactory" class="BeeeOn::AeotecZWaveMessageFactory">
+			<set name="manufacturer" text="0x0086" />
+		</instance>
+
+		<instance name="jablotronDeviceManager" class="BeeeOn::JablotronDeviceManager">
+			<set name="distributor" ref="distributor" />
+			<set name="commandDispatcher" ref="commandDispatcher" />
 		</instance>
 	</factory>
 </system>

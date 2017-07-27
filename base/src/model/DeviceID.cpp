@@ -79,8 +79,5 @@ DeviceID DeviceID::random(const DevicePrefix &prefix)
 	ident <<= 24;
 	ident |= rnd.next(1 << 24);
 
-	if (prefix == DevicePrefix::PREFIX_INVALID)
-		return DeviceID(DevicePrefix::random(), ident);
-
 	return DeviceID(prefix, ident);
 }

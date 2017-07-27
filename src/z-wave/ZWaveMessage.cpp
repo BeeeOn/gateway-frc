@@ -5,33 +5,58 @@
 #include <Poco/NumberParser.h>
 
 #include <openzwave/Manager.h>
+#include <functional>
 
+#include "model/ModuleType.h"
 #include "z-wave/ZWaveMessage.h"
-#include "z-wave/NotificationProcessor.h"
+
+#include "z-wave/ZWaveDeviceManager.h"
 
 using namespace BeeeOn;
+using namespace Poco;
 using namespace std;
 
-#define SENSOR_INDEX_BATTERY             0
-#define SENSOR_INDEX_HUMINIDITY          5
-#define SENSOR_INDEX_LUMINISTANCE        3
-#define SENSOR_INDEX_SENSOR              0
-#define SENSOR_INDEX_TEMPERATURE         1
-#define SENSOR_INDEX_ULTRAVIOLET         27
+/**
+ * Z-Wave index in CommandClass 49 (COMMAND_CLASS_SENSOR_MULTILEVEL)
+ */
+const static int SENSOR_INDEX_BATTERY = 0;
+const static int SENSOR_INDEX_HUMIDITY = 5;
+const static int SENSOR_INDEX_LUMINESCENCE = 3;
+const static int SENSOR_INDEX_SENSOR = 0;
+const static int SENSOR_INDEX_TEMPERATURE = 1;
+const static int SENSOR_INDEX_ULTRAVIOLET = 27;
+
+const static int MAXIMUN_SENSOR_TYPE = 0x3c;
+
+static map<int, ModuleType::Type> maps = {
+	pair<int, ModuleType::Type>(1, ModuleType::Type::TYPE_TEMPERATURE),
+	pair<int, ModuleType::Type>(5, ModuleType::Type::TYPE_HUMIDITY)
+};
+
+bool ZWaveMessage::modifyValue(
+	const ModuleID &, double, const uint8_t)
+{
+	throw NotImplementedException("modifyValue not implemented");
+}
+
+void ZWaveMessage::modifyValueAfterStart()
+{
+	throw NotImplementedException("modifyValueAfterStart not implemented");
+}
 
 bool ZWaveMessage::asBool(const string &value)
 {
-	return (bool) Poco::NumberParser::parseFloat(value);
+	return (bool) NumberParser::parseFloat(value);
 }
 
 bool ZWaveMessage::extractFloat(double &value, const ZWaveSensorValue &item)
 {
 	try {
-		value = Poco::NumberParser::parseFloat(item.value);;
+		value = NumberParser::parseFloat(item.value);;
 		return true;
 	}
-	catch (Poco::Exception& ex) {
-		logger().error("Failed to parse value " + item.value + "as a double");
+	catch (const Exception& ex) {
+		logger().error("failed to parse value " + item.value + "as a double");
 		logger().log(ex, __FILE__, __LINE__);
 		return false;
 	}
@@ -40,11 +65,11 @@ bool ZWaveMessage::extractFloat(double &value, const ZWaveSensorValue &item)
 bool ZWaveMessage::extractInt(int &value, const ZWaveSensorValue &item)
 {
 	try {
-		value = Poco::NumberParser::parse(item.value);;
+		value = NumberParser::parse(item.value);;
 		return true;
 	}
-	catch (Poco::Exception& ex) {
-		logger().error("Failed to parse value " + item.value + "as a int");
+	catch (const Exception& ex) {
+		logger().error("failed to parse value " + item.value + "as a int");
 		logger().log(ex, __FILE__, __LINE__);
 		return false;
 	}
@@ -71,14 +96,11 @@ bool ZWaveMessage::extractString(string &value,
 	return true;
 }
 
-bool ZWaveMessage::getSpecificValue(string &value, const int &commandClass,
+bool ZWaveMessage::extractSpecificValue(string &value, const int &commandClass,
 	const int &index, const vector<ZWaveSensorValue> &zwaveValues)
 {
 	for (const ZWaveSensorValue &item : zwaveValues) {
-		if (!isEqual(item.commandClass,
-				commandClass,
-				item.index,
-				index))
+		if (!isEqual(item, commandClass, index))
 			continue;
 
 		value = item.value;
@@ -88,15 +110,14 @@ bool ZWaveMessage::getSpecificValue(string &value, const int &commandClass,
 	return false;
 }
 
-bool ZWaveMessage::getTemperature(string &value,
+bool ZWaveMessage::parseTemperature(string &value,
 	const vector<ZWaveSensorValue> &zwaveValues)
 {
 	double temperature;
 
 	for (const ZWaveSensorValue &item : zwaveValues) {
-		if (!isEqual(item.commandClass,
+		if (!isEqual(item,
 				COMMAND_CLASS_SENSOR_MULTILEVEL,
-				item.index,
 				SENSOR_INDEX_TEMPERATURE))
 			continue;
 
@@ -113,15 +134,14 @@ bool ZWaveMessage::getTemperature(string &value,
 	return false;
 }
 
-bool ZWaveMessage::getSwitchBinary(string &value,
+bool ZWaveMessage::parseSwitchBinary(string &value,
 	const vector<ZWaveSensorValue> &zwaveValues)
 {
 	bool switchValue;
 
 	for (const ZWaveSensorValue &item : zwaveValues) {
-		if (!isEqual(item.commandClass,
+		if (!isEqual(item,
 				COMMAND_CLASS_SWITCH_BINARY,
-				item.index,
 				SENSOR_INDEX_SENSOR))
 			continue;
 
@@ -135,24 +155,23 @@ bool ZWaveMessage::getSwitchBinary(string &value,
 	return false;
 }
 
-bool ZWaveMessage::getBatteryLevel(string &value,
+bool ZWaveMessage::parseBatteryLevel(string &value,
 	const vector<ZWaveSensorValue> &zwaveValues)
 {
-	return getSpecificValue(value,
+	return extractSpecificValue(value,
 		COMMAND_CLASS_BATTERY,
 		SENSOR_INDEX_BATTERY,
 		zwaveValues);
 }
 
-bool ZWaveMessage::getSensorValue(string &value,
+bool ZWaveMessage::parseSensorValue(string &value,
 	const vector<ZWaveSensorValue> &zwaveValues)
 {
 	bool sensorValue;
 
 	for (const ZWaveSensorValue &item : zwaveValues) {
-		if (!isEqual(item.commandClass,
+		if (!isEqual(item,
 				COMMAND_CLASS_SENSOR_BINARY,
-				item.index,
 				SENSOR_INDEX_SENSOR))
 			continue;
 
@@ -166,25 +185,25 @@ bool ZWaveMessage::getSensorValue(string &value,
 	return false;
 }
 
-bool ZWaveMessage::getLuminance(string &value,
+bool ZWaveMessage::parseLuminance(string &value,
 	const vector<ZWaveSensorValue> &zwaveValues)
 {
-	return getSpecificValue(value, COMMAND_CLASS_SENSOR_MULTILEVEL,
-			SENSOR_INDEX_LUMINISTANCE, zwaveValues);
+	return extractSpecificValue(value, COMMAND_CLASS_SENSOR_MULTILEVEL,
+		SENSOR_INDEX_LUMINESCENCE, zwaveValues);
 }
 
-bool ZWaveMessage::getHumidity(string &value,
+bool ZWaveMessage::parseHumidity(string &value,
 	const vector<ZWaveSensorValue> &zwaveValues)
 {
-	return getSpecificValue(value, COMMAND_CLASS_SENSOR_MULTILEVEL,
-			SENSOR_INDEX_HUMINIDITY, zwaveValues);
+	return extractSpecificValue(value, COMMAND_CLASS_SENSOR_MULTILEVEL,
+		SENSOR_INDEX_HUMIDITY, zwaveValues);
 }
 
-bool ZWaveMessage::getUltraviolet(string &value,
+bool ZWaveMessage::parseUltraviolet(string &value,
 	const vector<ZWaveSensorValue> &zwaveValues)
 {
-	return getSpecificValue(value, COMMAND_CLASS_SENSOR_MULTILEVEL,
-			SENSOR_INDEX_ULTRAVIOLET, zwaveValues);
+	return extractSpecificValue(value, COMMAND_CLASS_SENSOR_MULTILEVEL,
+		SENSOR_INDEX_ULTRAVIOLET, zwaveValues);
 }
 
 void ZWaveMessage::sendActuatorValue(const OpenZWave::ValueID &valueId,
@@ -199,15 +218,15 @@ void ZWaveMessage::sendActuatorValue(const OpenZWave::ValueID &valueId,
 			OpenZWave::Manager::Get()->SetValue(valueId, asBool(value));
 			break;
 		case OpenZWave::ValueID::ValueType_Byte:
-			data = Poco::NumberParser::parseFloat(value);
+			data = NumberParser::parseFloat(value);
 			OpenZWave::Manager::Get()->SetValue(valueId, uint8_t(data));
 			break;
 		case OpenZWave::ValueID::ValueType_Short:
-			data = Poco::NumberParser::parseFloat(value);
+			data = NumberParser::parseFloat(value);
 			OpenZWave::Manager::Get()->SetValue(valueId, int16_t(data));
 			break;
 		case OpenZWave::ValueID::ValueType_Int:
-			data = Poco::NumberParser::parseFloat(value);
+			data = NumberParser::parseFloat(value);
 			OpenZWave::Manager::Get()->SetValue(valueId, int(data));
 			break;
 		case OpenZWave::ValueID::ValueType_List:
@@ -218,24 +237,24 @@ void ZWaveMessage::sendActuatorValue(const OpenZWave::ValueID &valueId,
 					__FILE__, __LINE__);
 			break;
 		}
-	} catch (Poco::Exception &ex) {
-		logger().error("Failed to parse value " +
+	} catch (const Exception &ex) {
+		logger().error("failed to parse value " +
 			to_string(data) + " as a float");
 		logger().log(ex, __FILE__, __LINE__);
 	}
 }
 
-bool ZWaveMessage::setActuator(const std::string &value, const int &commandClass,
+bool ZWaveMessage::setActuator(const string &value, const int &commandClass,
 	const int &index, const uint8_t &nodeId)
 {
-	NotificationProcessor::findNodeInfo(nodeId);
-	Poco::Nullable<NodeInfo> nodeInfo =
-		NotificationProcessor::findNodeInfo(nodeId);
+	FastMutex::ScopedLock guard(m_manager->lock());
+	Nullable<NodeInfo> nodeInfo =
+		m_manager->findNodeInfo(nodeId);
 
 	if (nodeInfo.isNull())
 		return false;
 
-	for (const OpenZWave::ValueID &item : nodeInfo.value().m_values) {
+	for (const OpenZWave::ValueID &item : nodeInfo.value().values) {
 		if (item.GetCommandClassId() == commandClass && item.GetIndex() == index) {
 			logger().debug("Set actuator, commandClass " + to_string(commandClass)
 					+ " index " + to_string(index));
@@ -247,8 +266,53 @@ bool ZWaveMessage::setActuator(const std::string &value, const int &commandClass
 	return false;
 }
 
-bool ZWaveMessage::isEqual(const int &commandClass1,
-	const int &commandClass2, const int &index1, const int &index2) const
+bool ZWaveMessage::isEqual(const ZWaveSensorValue &item,
+	const int &commandClass, const int &index) const
 {
-	return commandClass1 == commandClass2 && index1 == index2;
+	return item.commandClass == commandClass && index == item.index;
+}
+
+void ZWaveMessage::extractModuleTypes(list<ModuleType> &moduleTypes,
+	const vector<ZWaveSensorValue> &zwaveValues)
+{
+	string data;
+	for (int i = 0; i <= MAXIMUN_SENSOR_TYPE; i++) {
+		auto it = maps.find(i);
+		if (it == maps.end())
+			continue;
+
+		if (!extractSpecificValue(data, COMMAND_CLASS_SENSOR_MULTILEVEL, i, zwaveValues))
+			continue;
+
+		moduleTypes.push_back(
+			ModuleType(
+				it->second, set<ModuleType::Attribute>())
+		);
+	}
+}
+
+void ZWaveMessage::extractSensorData(SensorData &sensorData,
+	const vector<ZWaveSensorValue> &zwaveValues)
+{
+	string data;
+	uint16_t modules = 0;
+
+	for (int i = 0; i <= MAXIMUN_SENSOR_TYPE; i++) {
+		auto it = maps.find(i);
+		if (it == maps.end())
+			continue;
+
+		if (!extractSpecificValue(data, COMMAND_CLASS_SENSOR_MULTILEVEL, i, zwaveValues))
+			continue;
+
+		sensorData.insertValue(
+			SensorValue(modules, NumberParser::parseFloat(data))
+		);
+		modules++;
+	}
+}
+
+void ZWaveMessage::setManager(ZWaveDeviceManager *processor)
+{
+	m_manager = processor;
 }

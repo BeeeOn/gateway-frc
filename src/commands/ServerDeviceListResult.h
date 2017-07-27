@@ -32,7 +32,6 @@ protected:
 
 private:
 	std::vector<DeviceID> m_deviceList;
-	Poco::FastMutex m_lock;
 };
 
 }

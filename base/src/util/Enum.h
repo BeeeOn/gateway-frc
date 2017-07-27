@@ -91,10 +91,25 @@ public:
 	typedef typename EnumHelper<Raw>::ValueMap ValueMap;
 	typedef typename EnumHelper<Raw>::Value Value;
 
+	Enum(const Raw &raw):
+		Enum(fromRaw(raw).m_value)
+	{
+	}
+
 private:
 	Enum(const Value &value):
 		m_value(value)
 	{
+		if (value == Base::valueMap().end()) {
+			if (Base::valueMap().empty()) {
+				throw Poco::IllegalStateException(
+					"attempt to create enum that is empty");
+			}
+
+			// this is certainly a bug in the Enum class
+			throw Poco::IllegalStateException(
+				"invalid enum value determined");
+		}
 	}
 
 protected:
@@ -154,7 +169,15 @@ public:
 		Poco::Random rnd;
 		rnd.seed();
 
-		return fromRaw(rnd.next(rawMap().size()));
+		const std::size_t index = rnd.next(Base::valueMap().size());
+		Value it = Base::valueMap().begin();
+
+		for (std::size_t k = 0; it != Base::valueMap().end(); ++it, ++k) {
+			if (k == index)
+				break;
+		}
+
+		return Enum<Base, Raw>(it);
 	}
 
 	static Enum<Base, Raw> fromRaw(const unsigned int raw)
@@ -172,9 +195,19 @@ public:
 		return m_value == other.m_value;
 	}
 
+	bool operator ==(const Enum::Raw &other) const
+	{
+		return m_value->first == other;
+	}
+
 	bool operator !=(const Enum &other) const
 	{
 		return m_value != other.m_value;
+	}
+
+	bool operator !=(const Enum::Raw &other) const
+	{
+		return m_value->first != other;
 	}
 
 	bool operator <(const Enum &other) const
@@ -182,9 +215,19 @@ public:
 		return m_value->first < other.m_value->first;
 	}
 
+	bool operator <(const Enum::Raw &other) const
+	{
+		return m_value->first < other;
+	}
+
 	bool operator >(const Enum &other) const
 	{
 		return m_value->first > other.m_value->first;
+	}
+
+	bool operator >(const Enum::Raw &other) const
+	{
+		return m_value->first > other;
 	}
 
 	bool operator <=(const Enum &other) const
@@ -192,9 +235,19 @@ public:
 		return m_value->first <= other.m_value->first;
 	}
 
+	bool operator <=(const Enum::Raw &other) const
+	{
+		return m_value->first <= other;
+	}
+
 	bool operator >=(const Enum &other) const
 	{
 		return m_value->first >= other.m_value->first;
+	}
+
+	bool operator >=(const Enum::Raw &other) const
+	{
+		return m_value->first >= other;
 	}
 
 private:

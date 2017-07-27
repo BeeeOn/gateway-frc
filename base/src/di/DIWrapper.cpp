@@ -1,5 +1,7 @@
 #include <set>
 
+#include <Poco/Exception.h>
+
 #include "di/DIWrapper.h"
 
 using namespace std;
@@ -55,6 +57,14 @@ DIWTextSetter::~DIWTextSetter()
 }
 
 DIWRefSetter::~DIWRefSetter()
+{
+}
+
+DIWListSetter::~DIWListSetter()
+{
+}
+
+DIWMapSetter::~DIWMapSetter()
 {
 }
 
@@ -114,20 +124,29 @@ DIWCast *DIWCast::find(const type_info &info, DIWrapper &wrapper)
 	return NULL;
 }
 
-ManifestSingleton *ManifestSingleton::singleton = NULL;
-
-static void __attribute__((destructor,used)) ManifestSingleton_destroy()
+static map<string, DIWrapperFactory *> &factories()
 {
-	ManifestSingleton::destroy();
+	static map<string, DIWrapperFactory *> registry;
+	return registry;
 }
 
-void ManifestSingleton::reportInfo(Logger &logger)
+void DIWrapperFactory::registerFactory(
+		const string &name, DIWrapperFactory &factory)
 {
-	logger.debug("managing " + to_string(manifest().size()) + " classes in " + manifest().className());
-	Manifest<DIWrapper>::Iterator it = manifest().begin();
+	factories().emplace(name, &factory);
+}
 
-	for (; it != manifest().end(); ++it) {
-		string msg("registered class ");
-		logger.debug(msg + it->name(), __FILE__, __LINE__);
-	}
+DIWrapperFactory &DIWrapperFactory::lookupFactory(const string &name)
+{
+	auto it = factories().find(name);
+	if (it == factories().end())
+		throw NotFoundException("factory for class " + name + " is missing");
+
+	return *it->second;
+}
+
+void DIWrapperFactory::listFactories(list<string> &names)
+{
+	for (auto &pair : factories())
+		names.push_back(pair.first);
 }

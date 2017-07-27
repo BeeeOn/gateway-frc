@@ -80,16 +80,12 @@ public:
 	/**
 	 * Push the given work into the queue.
 	 * The BasicQueue::lock() must be held.
-	 *
-	 * It holds Work::executionLock() and Work::accessLock().
 	 */
 	void pushUnlocked(Work::Ptr work);
 
 	/**
 	 * Wakeup the given work if it is in the queue.
 	 * The BasicQueue::lock() must be held.
-	 *
-	 * It holds Work::executionLock() and Work::accessLock().
 	 */
 	void wakeupUnlocked(Work::Ptr work);
 
@@ -120,18 +116,11 @@ protected:
 	void assertLocked();
 
 	/**
-	 * Do push with no Work access locking.
-	 * This method must be called with Work::accessLock() held
-	 * for writing.
-	 */
-	void doPushUnlocked(Work::Ptr work, const WorkWriting &guard);
-
-	/**
 	 * Do push with no Work access locking and no execution locking.
 	 * If the given work is in STATE_EXECUTED, the Work::executionLock()
 	 * must be held to prevent race conditions.
 	 */
-	void doPushUnfinishedUnlocked(Work::Ptr work, const WorkWriting &guard);
+	void doPushUnfinishedUnlocked(Work::Ptr work);
 
 	/**
 	 * Pop the head of the queue if the Work is to be executed.

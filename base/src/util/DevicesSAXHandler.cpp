@@ -136,10 +136,16 @@ void DevicesSAXHandler::startElement(
 		if (name.empty())
 			error("name value is empty");
 
+		XMLString vendor;
+		if (!getAndTrimAttribute(attrList, "vendor", vendor))
+			error("missing attribute vendor");
+
+		if (vendor.empty())
+			error("vendor value is empty");
+
 		m_device.setId(DeviceInfoID::parse(id));
-		m_device.setName("");
-		m_device.setDisplayName(name);
-		m_device.setVendor("");
+		m_device.setName(name);
+		m_device.setVendor(vendor);
 		m_device.clear();
 	}
 
@@ -198,10 +204,10 @@ void DevicesSAXHandler::endElement(const SAXElement &element)
 	}
 
 	if (isPathFromRoot("devices", "device", "name"))
-		m_device.setName(element.content);
+		m_device.setDisplayName(element.content);
 
 	if (isPathFromRoot("devices", "device", "manufacturer"))
-		m_device.setVendor(element.content);
+		m_device.setDisplayVendor(element.content);
 
 	if (isPathFromRoot("devices", "device")) {
 		if (m_device.name().empty())

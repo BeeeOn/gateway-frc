@@ -31,7 +31,6 @@ public:
 	virtual ~InfoProvider();
 
 	const Poco::SharedPtr<T> findById(const typename T::ID &id) const;
-	const Poco::SharedPtr<T> findByName(const std::string &name) const;
 
 protected:
 	bool registerInfo(const T &info);
@@ -73,17 +72,6 @@ const Poco::SharedPtr<T> InfoProvider<T>::findById(const typename T::ID &id) con
 		return NULL;
 
 	return *it;
-}
-
-template <typename T>
-const Poco::SharedPtr<T> InfoProvider<T>::findByName(const std::string &name) const
-{
-	for (auto info : infoSet()) {
-		if (info.name() == name)
-			return *info;
-	}
-
-	return NULL;
 }
 
 template <typename T>

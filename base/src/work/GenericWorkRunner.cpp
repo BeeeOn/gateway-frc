@@ -3,21 +3,22 @@
 
 #include "di/Injectable.h"
 #include "work/GenericWorkRunner.h"
-#include "work/WorkAccess.h"
+#include "work/WorkBackup.h"
 #include "work/WorkExecutor.h"
-#include "work/WorkRepository.h"
+#include "work/WorkLockManager.h"
 #include "work/WorkScheduler.h"
 #include "work/WorkSuspendThrowable.h"
 
 BEEEON_OBJECT_BEGIN(BeeeOn, GenericWorkRunnerFactory)
 BEEEON_OBJECT_CASTABLE(WorkRunnerFactory)
+BEEEON_OBJECT_REF("lockManager", &WorkRunnerFactory::setLockManager)
 BEEEON_OBJECT_END(BeeeOn, GenericWorkRunnerFactory)
 
 using namespace Poco;
 using namespace BeeeOn;
 
-GenericWorkRunner::GenericWorkRunner(WorkScheduler &scheduler):
-	WorkRunner(scheduler)
+GenericWorkRunner::GenericWorkRunner(WorkScheduler &scheduler, WorkLockManager &lockManager):
+	WorkRunner(scheduler, lockManager)
 {
 }
 
@@ -25,7 +26,7 @@ GenericWorkRunner::~GenericWorkRunner()
 {
 }
 
-void GenericWorkRunner::doSuspend(WorkExecuting &guard)
+void GenericWorkRunner::doSuspend(WorkWriteGuard &guard)
 {
 	if (logger().debug()) {
 		logger().debug("work " + *m_work + " will be suspended",
@@ -34,12 +35,10 @@ void GenericWorkRunner::doSuspend(WorkExecuting &guard)
 
 	m_work->setSuspended(Timestamp());
 
-	// We do not set SCHEDULED because this will be done
-	// by schedule anyway. If somebody cancels the work
-	// before schedule() would lock the executionLock()
-	// then the work would be cancelled with suspended time
-	// set which is not a problem.
-	guard.interrupt(__FILE__, __LINE__);
+	// Calling schedule while holding execution lock
+	// this should not be an issue.
+	// However, holding of access lock would cause a deadlock.
+	guard.unlock();
 	m_scheduler.schedule(m_work);
 }
 
@@ -50,11 +49,9 @@ void GenericWorkRunner::doFinish()
 				__FILE__, __LINE__);
 	}
 
-	WorkWriting guard(m_work, __FILE__, __LINE__);
-
-	m_work->setState(Work::STATE_FINISHED, guard);
-	m_work->setFinished(Timestamp(), guard);
-	m_repository->store(m_work);
+	m_work->setState(Work::STATE_FINISHED);
+	m_work->setFinished(Timestamp());
+	m_backup->store(m_work);
 }
 
 void GenericWorkRunner::doFailed()
@@ -64,11 +61,9 @@ void GenericWorkRunner::doFailed()
 				__FILE__, __LINE__);
 	}
 
-	WorkWriting guard(m_work, __FILE__, __LINE__);
-
-	m_work->setState(Work::STATE_FAILED, guard);
-	m_work->setFinished(Timestamp(), guard);
-	m_repository->store(m_work);
+	m_work->setState(Work::STATE_FAILED);
+	m_work->setFinished(Timestamp());
+	m_backup->store(m_work);
 }
 
 void GenericWorkRunner::run()
@@ -95,15 +90,14 @@ void GenericWorkRunner::run()
 
 void GenericWorkRunner::prepare()
 {
-	WorkWriting guard(m_work, __FILE__, __LINE__);
-
-	m_work->setState(Work::STATE_EXECUTED, guard);
-	m_repository->store(m_work);
+	m_work->setState(Work::STATE_EXECUTED);
+	m_backup->store(m_work);
 }
 
 void GenericWorkRunner::execute()
 {
-	WorkExecuting guard(m_work, __FILE__, __LINE__);
+	WorkExecutionGuard guard(m_lockManager.execute(m_work->id()));
+	WorkWriteGuard accessGuard(m_lockManager.readWrite(m_work->id()));
 
 	if (logger().debug())
 		logger().debug("executing work " + *m_work, __FILE__, __LINE__);
@@ -115,11 +109,11 @@ void GenericWorkRunner::execute()
 	}
 	catch (const WorkSuspendForEventThrowable &t) {
 		m_work->setNoSleepDuration();
-		doSuspend(guard);
+		doSuspend(accessGuard);
 	}
 	catch (const WorkSuspendThrowable &t) {
 		m_work->setSleepDuration(t.duration());
-		doSuspend(guard);
+		doSuspend(accessGuard);
 	}
 	catch (...) {
 		doFailed();
@@ -130,5 +124,5 @@ void GenericWorkRunner::execute()
 WorkRunner *GenericWorkRunnerFactory::create(
 		WorkScheduler &scheduler)
 {
-	return new GenericWorkRunner(scheduler);
+	return new GenericWorkRunner(scheduler, *m_lockManager);
 }

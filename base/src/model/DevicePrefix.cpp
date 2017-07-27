@@ -9,7 +9,7 @@ EnumHelper<DevicePrefixEnum::Raw>::ValueMap
 		{DevicePrefixEnum::PREFIX_INVALID, "Invalid"},
 		{DevicePrefixEnum::PREFIX_FITPROTOCOL, "Fitprotocol"},
 		{DevicePrefixEnum::PREFIX_PRESSURE_SENSOR, "PressureSensor"},
-		{DevicePrefixEnum::PREFIX_VIRTUAL_SENSOR, "VirtualSensor"},
+		{DevicePrefixEnum::PREFIX_VIRTUAL_DEVICE, "VirtualDevice"},
 		{DevicePrefixEnum::PREFIX_VPT, "VPT"},
 		{DevicePrefixEnum::PREFIX_OPENHAB, "OpenHAB"},
 		{DevicePrefixEnum::PREFIX_BLUETOOTH, "Bluetooth"},

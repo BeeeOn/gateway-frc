@@ -13,6 +13,7 @@
 #include "work/BasicProcessor.h"
 #include "work/Work.h"
 #include "work/WorkExecutor.h"
+#include "work/WorkLockManager.h"
 
 using namespace Poco;
 
@@ -38,6 +39,7 @@ public:
 
 private:
 	TestableBasicProcessor *m_processor;
+	WorkLockManager *m_lockManager;
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(BasicProcessorTest);
@@ -74,7 +76,9 @@ public:
 
 void BasicProcessorTest::setUp()
 {
+	m_lockManager = new WorkLockManager(31, 63);
 	m_processor = new TestableBasicProcessor();
+	m_processor->setLockManager(m_lockManager);
 }
 
 void BasicProcessorTest::tearDown()

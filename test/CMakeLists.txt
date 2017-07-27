@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 2.8.11)
 project (gateway-tests CXX)
 
 find_library (CPP_UNIT cppunit)
+find_library (MOSQUITTO_CPP mosquittopp)
 find_library (POCO_FOUNDATION PocoFoundation)
 find_library (POCO_UTIL PocoUtil)
 find_library (POCO_SSL PocoNetSSL)
@@ -10,22 +11,22 @@ find_library (POCO_NET PocoNet)
 find_library (POCO_JSON PocoJSON)
 find_library (POCO_XML PocoXML)
 find_library (PTHREAD pthread)
-find_library (ZMQ zmq)
-find_library (OPENZWAVE openzwave)
+find_library (UDEV udev)
 
+find_package(OpenZWave REQUIRED)
+include_directories(${OPENZWAVE_INCLUDE_DIR})
 
 file(GLOB TEST_SOURCES
 	${PROJECT_SOURCE_DIR}/core/AnswerQueueTest.cpp
 	${PROJECT_SOURCE_DIR}/core/CommandDispatcherTest.cpp
 	${PROJECT_SOURCE_DIR}/core/CommandsTest.cpp
+	${PROJECT_SOURCE_DIR}/core/DongleDeviceManagerTest.cpp
+	${PROJECT_SOURCE_DIR}/core/ExporterQueueTest.cpp
+	${PROJECT_SOURCE_DIR}/core/QueuingDistributorTest.cpp
 	${PROJECT_SOURCE_DIR}/credentials/CredentialsStorageTest.cpp
 	${PROJECT_SOURCE_DIR}/credentials/CredentialsTest.cpp
-	${PROJECT_SOURCE_DIR}/util/AsyncExecutorTest.cpp
 	${PROJECT_SOURCE_DIR}/util/IncompleteTimestampTest.cpp
-	${PROJECT_SOURCE_DIR}/zmq/ZMQDeviceManagerTableTest.cpp
-	${PROJECT_SOURCE_DIR}/zmq/ZMQMessageTest.cpp
-
-	${PROJECT_SOURCE_DIR}/zmq/ZMQBrokerTest.cpp
+	${PROJECT_SOURCE_DIR}/util/JSONSensorDataFormatterTest.cpp
 )
 
 include_directories(
@@ -41,17 +42,18 @@ add_executable(test-suite-gateway
 )
 
 set(LIBS
+	${MOSQUITTO_CPP}
 	${POCO_FOUNDATION}
 	${POCO_SSL}
 	${POCO_CRYPTO}
 	${POCO_UTIL}
 	${POCO_NET}
-	${POCO_XML}
 	${POCO_JSON}
+	${POCO_XML}
 	${CPP_UNIT}
 	${PTHREAD}
-	${ZMQ}
-	${OPENZWAVE}
+	${UDEV}
+	${OPENZWAVE_LIBRARY}
 )
 
 target_link_libraries(test-suite-gateway

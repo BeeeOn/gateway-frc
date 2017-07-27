@@ -130,8 +130,15 @@ int DIDaemon::main(const std::vector<std::string> &)
 
 	testPocoCompatibility();
 
-	if (logger().debug())
-		ManifestSingleton::reportInfo(logger());
+	if (logger().debug()) {
+		list<string> names;
+		DIWrapperFactory::listFactories(names);
+
+		for (const auto &name : names) {
+			logger().debug("registered class " + name,
+					__FILE__, __LINE__);
+		}
+	}
 
 	logger().debug("creating runner " + runnerName(),
 			__FILE__, __LINE__);

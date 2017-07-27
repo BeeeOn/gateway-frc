@@ -3,10 +3,22 @@
 #include <cstdlib>
 #endif
 
+#include <map>
+
+#include <Poco/Exception.h>
+#include <Poco/Logger.h>
+
 #include "util/ClassInfo.h"
+#include "util/Loggable.h"
 
 using namespace std;
+using namespace Poco;
 using namespace BeeeOn;
+
+ClassInfo::ClassInfo():
+	m_index(typeid(NoneType))
+{
+}
 
 ClassInfo::ClassInfo(const type_index &index):
 	m_index(index)
@@ -68,13 +80,47 @@ string ClassInfo::name() const
 	return t == std::string::npos? s : s.substr(0, t);
 }
 #else
-string ClassInfo::displayName() const
+string ClassInfo::name() const
 {
-	return name();
+	return id();
 }
 #endif
 
 type_index ClassInfo::index() const
 {
 	return m_index;
+}
+
+static map<string, type_index> &registry()
+{
+	static map<string, type_index> registry;
+	return registry;
+}
+
+void ClassInfo::registerClassInfo(
+			const string &name,
+			const type_info &info)
+{
+	ClassInfo clazz(info);
+
+	if (clazz.name() != name) {
+		Loggable::forMethod(__func__).warning(
+			"registering name " + name + " that is "
+			"incompatible with ClassInfo::name() method",
+			__FILE__, __LINE__
+		);
+
+		registry().emplace(name, type_index(info));
+	}
+
+	registry().emplace(clazz.name(), type_index(info));
+}
+
+ClassInfo ClassInfo::byName(const string &name)
+{
+	auto it = registry().find(name);
+	if (it == registry().end())
+		throw NotFoundException("class " + name + " is not registered");
+	else
+		return ClassInfo(it->second);
 }

@@ -1,18 +1,17 @@
 #pragma once
 
+#include "z-wave/ManufacturerZWaveMessageFactory.h"
 #include "z-wave/ZWaveMessageFactory.h"
 #include "z-wave/products/AeotecZW100ZWaveMessage.h"
 
 namespace BeeeOn {
 
-#define AEOTEC_MANUFACTURER     0x0086
-
 /*
  * It creates Aeotec products.
  */
-class AeotecZWaveMessageFactory : public ZWaveMessageFactory {
+class AeotecZWaveMessageFactory : public ManufacturerZWaveMessageFactory {
 public:
-	ZWaveMessage *create(uint32_t manufacturer, uint32_t product) override;
+	ZWaveMessage::Ptr createByProduct(const uint32_t product) override;
 };
 
 }

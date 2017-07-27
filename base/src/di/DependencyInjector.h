@@ -34,6 +34,7 @@ class InstanceInfo;
  *   + attribute ref    - value to set is a reference to an instance by name
  *   + attribute text   - value to set is a string
  *   + attribute number - value to set is an integer
+ *   + attribute list   - value to set is a list of strings
  *   + attribute if-yes - optional condition to avoid applying the "set"
  *
  * * add: adds a value to a property list
@@ -42,6 +43,14 @@ class InstanceInfo;
  *   + attribute text   - value to add is a string
  *   + attribute number - value to add is an integer
  *   + attribute if-yes - optional condition to avoid applying the "add"
+ *
+ * * map: constructs a map of key-value pairs
+ *   + attribute name   - name of the property to inject
+ *   + attribute if-yes - optional constructs to avoid applying the "map"
+ *
+ *   * subelement: pair
+ *     + attribute key  - key of the map pair
+ *     + attribute text - value of the pair as string
  *
  * * alias: defines alias name of an existing instance
  *   + attribute name   - name of the alias (new instance name)
@@ -62,7 +71,15 @@ class InstanceInfo;
  *		<set name="listenPort"  number="8080" />
  *		<add name="listeners"   ref="loginListener" />
  *		<add name="listeners"   ref="errorListener" />
+ *		<set name="whitelist"   list="192.168.5.5,192.168.15.1" />
  *	</instance>
+ *
+ *      <instance name="nameMap" class="BeeeOn::NameMap">
+ *		<map name="mapping">
+ *			<pair key="first" text="The First One" />
+ *			<pair key="second" text="The Second One" />
+ *		</map>
+ *      </instance>
  *
  *	<instance name="userService" class="BeeeOn::UserService" />
  *	<instance name="loginListener" class="BeeeOn::LoginListener" />
@@ -141,11 +158,18 @@ private:
 			DIWrapper *target,
 			const std::string &key,
 			const std::string &name);
+	bool tryInjectList(const InstanceInfo &info,
+			DIWrapper *target,
+			const std::string &key,
+			const std::string &name);
+	bool tryInjectMap(const InstanceInfo &info,
+			DIWrapper *target,
+			const std::string &key,
+			const std::string &name);
 
 private:
 	WrapperMap m_set;
 	WrapperVector m_free;
-	Poco::Manifest<DIWrapper> m_manifest;
 	Poco::AutoPtr<Poco::Util::AbstractConfiguration> m_conf;
 };
 

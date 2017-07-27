@@ -14,12 +14,16 @@ class EnumTest : public CppUnit::TestFixture {
 	CPPUNIT_TEST(testFromRaw);
 	CPPUNIT_TEST(testCompare);
 	CPPUNIT_TEST(testStringConcat);
+	CPPUNIT_TEST(testRandom);
+	CPPUNIT_TEST(testImplicitConstructor);
 	CPPUNIT_TEST_SUITE_END();
 public:
 	void testParse();
 	void testFromRaw();
 	void testCompare();
 	void testStringConcat();
+	void testRandom();
+	void testImplicitConstructor();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(EnumTest);
@@ -27,9 +31,9 @@ CPPUNIT_TEST_SUITE_REGISTRATION(EnumTest);
 struct TestTypeEnum {
 	enum Raw {
 		TEST_X0 = 0,
-		TEST_X1,
-		TEST_X2,
-		TEST_X3
+		TEST_X1 = 10,
+		TEST_X2 = 20,
+		TEST_X3 = 100
 	};
 
 	static EnumHelper<Raw>::ValueMap &valueMap();
@@ -109,6 +113,27 @@ void EnumTest::testStringConcat()
 	CPPUNIT_ASSERT_EQUAL("test: x2", "test: " + a);
 	CPPUNIT_ASSERT_EQUAL("test: x3", "test: " + b);
 	CPPUNIT_ASSERT_EQUAL("test: x2, x3", "test: " + a + ", " + b);
+}
+
+/**
+ * This is a probabilistic test. We assume that 1000 attempts is enough
+ * to cover all 4 enum values at least once. The test must not fail even
+ * in case when the used enum (TestType) uses sparse numbers for enum
+ * values. Here we have e.g. TEST_X0 == 0 and TEST_X1 == 10.
+ */
+void EnumTest::testRandom()
+{
+	for (int i = 0; i < 1000; ++i)
+		TestType::random();
+}
+
+void EnumTest::testImplicitConstructor()
+{
+	TestType type0(TestType::TEST_X2);
+	CPPUNIT_ASSERT_EQUAL("x2", type0.toString());
+
+	TestType type1 = TestType::TEST_X0;
+	CPPUNIT_ASSERT_EQUAL("x0", type1.toString());
 }
 
 }

@@ -5,7 +5,8 @@
 #include "cppunit/BetterAssert.h"
 #include "work/GenericWorkRunner.h"
 #include "work/WorkExecutor.h"
-#include "work/WorkRepository.h"
+#include "work/WorkBackup.h"
+#include "work/WorkLockManager.h"
 #include "work/WorkScheduler.h"
 #include "work/WorkSuspendThrowable.h"
 
@@ -122,7 +123,7 @@ public:
 	int m_notify = 0;
 };
 
-class TestWorkRepository : public WorkRepository {
+class TestWorkBackup : public WorkBackup {
 public:
 	void store(Work::Ptr, bool) override
 	{
@@ -139,21 +140,22 @@ public:
 void GenericWorkRunnerTest::testSuspendExecution()
 {
 	TestWorkScheduler scheduler;
-	GenericWorkRunner *runner(new GenericWorkRunner(scheduler));
+	WorkLockManager manager(1, 1);
+	GenericWorkRunner *runner(new GenericWorkRunner(scheduler, manager));
 
-	TestWorkRepository repository;
+	TestWorkBackup backup;
 	SuspendingWorkExecutor executor;
 	Work::Ptr work(new Work);
 
 	runner->setExecutor(&executor);
 	runner->setWork(work);
-	runner->setRepository(&repository);
+	runner->setBackup(&backup);
 
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_schedule);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_wakeup);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_cancel);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_notify);
-	CPPUNIT_ASSERT_EQUAL(0, repository.m_store);
+	CPPUNIT_ASSERT_EQUAL(0, backup.m_store);
 	CPPUNIT_ASSERT(!Work::timestampValid(work->suspended()));
 	CPPUNIT_ASSERT(!Work::timestampValid(work->finished()));
 	CPPUNIT_ASSERT_EQUAL(Work::STATE_IDLE, work->state());
@@ -164,7 +166,7 @@ void GenericWorkRunnerTest::testSuspendExecution()
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_wakeup);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_cancel);
 	CPPUNIT_ASSERT_EQUAL(1, scheduler.m_notify);
-	CPPUNIT_ASSERT_EQUAL(1, repository.m_store);
+	CPPUNIT_ASSERT_EQUAL(1, backup.m_store);
 	CPPUNIT_ASSERT(Work::timestampValid(work->suspended()));
 	CPPUNIT_ASSERT(!Work::timestampValid(work->finished()));
 	CPPUNIT_ASSERT_EQUAL(Work::STATE_EXECUTED, work->state());
@@ -173,21 +175,22 @@ void GenericWorkRunnerTest::testSuspendExecution()
 void GenericWorkRunnerTest::testEventSuspendExecution()
 {
 	TestWorkScheduler scheduler;
-	GenericWorkRunner *runner(new GenericWorkRunner(scheduler));
+	WorkLockManager manager(1, 1);
+	GenericWorkRunner *runner(new GenericWorkRunner(scheduler, manager));
 
-	TestWorkRepository repository;
+	TestWorkBackup backup;
 	EventSuspendingWorkExecutor executor;
 	Work::Ptr work(new Work);
 
 	runner->setExecutor(&executor);
 	runner->setWork(work);
-	runner->setRepository(&repository);
+	runner->setBackup(&backup);
 
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_schedule);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_wakeup);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_cancel);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_notify);
-	CPPUNIT_ASSERT_EQUAL(0, repository.m_store);
+	CPPUNIT_ASSERT_EQUAL(0, backup.m_store);
 	CPPUNIT_ASSERT(!Work::timestampValid(work->suspended()));
 	CPPUNIT_ASSERT(!Work::timestampValid(work->finished()));
 	CPPUNIT_ASSERT_EQUAL(Work::STATE_IDLE, work->state());
@@ -198,7 +201,7 @@ void GenericWorkRunnerTest::testEventSuspendExecution()
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_wakeup);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_cancel);
 	CPPUNIT_ASSERT_EQUAL(1, scheduler.m_notify);
-	CPPUNIT_ASSERT_EQUAL(1, repository.m_store);
+	CPPUNIT_ASSERT_EQUAL(1, backup.m_store);
 	CPPUNIT_ASSERT(Work::timestampValid(work->suspended()));
 	CPPUNIT_ASSERT(!Work::timestampValid(work->finished()));
 	CPPUNIT_ASSERT_EQUAL(Work::STATE_EXECUTED, work->state());
@@ -207,21 +210,22 @@ void GenericWorkRunnerTest::testEventSuspendExecution()
 void GenericWorkRunnerTest::testFinishExecution()
 {
 	TestWorkScheduler scheduler;
-	GenericWorkRunner *runner(new GenericWorkRunner(scheduler));
+	WorkLockManager manager(1, 1);
+	GenericWorkRunner *runner(new GenericWorkRunner(scheduler, manager));
 
-	TestWorkRepository repository;
+	TestWorkBackup backup;
 	FinishingWorkExecutor executor;
 	Work::Ptr work(new Work);
 
 	runner->setExecutor(&executor);
 	runner->setWork(work);
-	runner->setRepository(&repository);
+	runner->setBackup(&backup);
 
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_schedule);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_wakeup);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_cancel);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_notify);
-	CPPUNIT_ASSERT_EQUAL(0, repository.m_store);
+	CPPUNIT_ASSERT_EQUAL(0, backup.m_store);
 	CPPUNIT_ASSERT(!Work::timestampValid(work->suspended()));
 	CPPUNIT_ASSERT(!Work::timestampValid(work->finished()));
 	CPPUNIT_ASSERT_EQUAL(Work::STATE_IDLE, work->state());
@@ -232,7 +236,7 @@ void GenericWorkRunnerTest::testFinishExecution()
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_wakeup);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_cancel);
 	CPPUNIT_ASSERT_EQUAL(1, scheduler.m_notify);
-	CPPUNIT_ASSERT_EQUAL(2, repository.m_store);
+	CPPUNIT_ASSERT_EQUAL(2, backup.m_store);
 	CPPUNIT_ASSERT(!Work::timestampValid(work->suspended()));
 	CPPUNIT_ASSERT(Work::timestampValid(work->finished()));
 	CPPUNIT_ASSERT_EQUAL(Work::STATE_FINISHED, work->state());
@@ -241,21 +245,22 @@ void GenericWorkRunnerTest::testFinishExecution()
 void GenericWorkRunnerTest::testFailedExecution()
 {
 	TestWorkScheduler scheduler;
-	GenericWorkRunner *runner(new GenericWorkRunner(scheduler));
+	WorkLockManager manager(1, 1);
+	GenericWorkRunner *runner(new GenericWorkRunner(scheduler, manager));
 
-	TestWorkRepository repository;
+	TestWorkBackup backup;
 	FailingWorkExecutor executor;
 	Work::Ptr work(new Work);
 
 	runner->setExecutor(&executor);
 	runner->setWork(work);
-	runner->setRepository(&repository);
+	runner->setBackup(&backup);
 
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_schedule);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_wakeup);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_cancel);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_notify);
-	CPPUNIT_ASSERT_EQUAL(0, repository.m_store);
+	CPPUNIT_ASSERT_EQUAL(0, backup.m_store);
 	CPPUNIT_ASSERT(!Work::timestampValid(work->suspended()));
 	CPPUNIT_ASSERT(!Work::timestampValid(work->finished()));
 	CPPUNIT_ASSERT_EQUAL(Work::STATE_IDLE, work->state());
@@ -266,7 +271,7 @@ void GenericWorkRunnerTest::testFailedExecution()
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_wakeup);
 	CPPUNIT_ASSERT_EQUAL(0, scheduler.m_cancel);
 	CPPUNIT_ASSERT_EQUAL(1, scheduler.m_notify);
-	CPPUNIT_ASSERT_EQUAL(2, repository.m_store);
+	CPPUNIT_ASSERT_EQUAL(2, backup.m_store);
 	CPPUNIT_ASSERT(!Work::timestampValid(work->suspended()));
 	CPPUNIT_ASSERT(Work::timestampValid(work->finished()));
 	CPPUNIT_ASSERT_EQUAL(Work::STATE_FAILED, work->state());
@@ -283,9 +288,9 @@ public:
 
 class ConcurrentExecutor : public WorkExecutor, public Poco::Runnable {
 public:
-	ConcurrentExecutor(WorkScheduler &scheduler):
+	ConcurrentExecutor(WorkScheduler &scheduler, WorkLockManager &lockManager):
 		m_success(false),
-		m_runner(new GenericWorkRunner(scheduler))
+		m_runner(new GenericWorkRunner(scheduler, lockManager))
 	{
 	}
 
@@ -319,30 +324,31 @@ public:
 
 void GenericWorkRunnerTest::testConcurrentExecution()
 {
+	WorkLockManager lockManager(15, 15);
 	Work::Ptr work(new ConcurrentWork);
 
 	TestWorkScheduler scheduler0;
-	TestWorkRepository repository0;
-	ConcurrentExecutor executor0(scheduler0);
+	TestWorkBackup repository0;
+	ConcurrentExecutor executor0(scheduler0, lockManager);
 	executor0.m_runner->setWork(work);
 	executor0.m_runner->setExecutor(&executor0);
-	executor0.m_runner->setRepository(&repository0);
+	executor0.m_runner->setBackup(&repository0);
 	Thread t0;
 
 	TestWorkScheduler scheduler1;
-	TestWorkRepository repository1;
-	ConcurrentExecutor executor1(scheduler1);
+	TestWorkBackup repository1;
+	ConcurrentExecutor executor1(scheduler1, lockManager);
 	executor1.m_runner->setWork(work);
 	executor1.m_runner->setExecutor(&executor1);
-	executor1.m_runner->setRepository(&repository1);
+	executor1.m_runner->setBackup(&repository1);
 	Thread t1;
 
 	TestWorkScheduler scheduler2;
-	TestWorkRepository repository2;
-	ConcurrentExecutor executor2(scheduler2);
+	TestWorkBackup repository2;
+	ConcurrentExecutor executor2(scheduler2, lockManager);
 	executor2.m_runner->setWork(work);
 	executor2.m_runner->setExecutor(&executor2);
-	executor2.m_runner->setRepository(&repository2);
+	executor2.m_runner->setBackup(&repository2);
 	Thread t2;
 
 	t2.start(executor2);

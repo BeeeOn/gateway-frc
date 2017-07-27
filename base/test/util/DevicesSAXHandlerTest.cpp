@@ -48,18 +48,18 @@ void DevicesSAXHandlerTest::testParseSimple()
 	CPPUNIT_ASSERT_NO_THROW(
 		m_parser.parseString(
 			"<devices>"
-			"  <device id=\"0x01\" name=\"@NAME1\">"
+			"  <device id=\"0x01\" name=\"@NAME1\" vendor=\"@VENDOR1\">"
 			"    <name>NAME1</name>"
-			"    <manufacturer>unknown</manufacturer>"
+			"    <manufacturer>VENDOR1</manufacturer>"
 			"    <modules>"
 			"      <sensor id=\"0x11\" type=\"0x01\">"
 			"        <name>SENSOR1</name>"
 			"      </sensor>"
 			"    </modules>"
 			"  </device>"
-			"  <device id=\"0x02\" name=\"@NAME2\">"
+			"  <device id=\"0x02\" name=\"@NAME2\" vendor=\"@VENDOR2\">"
 			"    <name>NAME2</name>"
-			"    <manufacturer>Good Company</manufacturer>"
+			"    <manufacturer>VENDOR2</manufacturer>"
 			"    <modules>"
 			"      <sensor id=\"0x21\" type=\"0x02\">"
 			"        <name>SENSOR2</name>"
@@ -72,9 +72,9 @@ void DevicesSAXHandlerTest::testParseSimple()
 			"      </actuator>"
 			"    </modules>"
 			"  </device>"
-			"  <device id=\"0x03\" name=\"@NAME3\">"
+			"  <device id=\"0x03\" name=\"@NAME3\" vendor=\"@VENDOR3\">"
 			"    <name>NAME3</name>"
-			"    <manufacturer>Bad Company</manufacturer>"
+			"    <manufacturer>VENDOR3</manufacturer>"
 			"    <modules>"
 			"      <sensor id=\"0x31\" type=\"0x03\" unavailable-value=\"0xffff\">"
 			"        <name>SENSOR3</name>"
@@ -92,9 +92,10 @@ void DevicesSAXHandlerTest::testParseSimple()
 
 	for (auto device : *m_handler) {
 		if (device.id() == DeviceInfoID::parse("0x01")) {
-			CPPUNIT_ASSERT_EQUAL(string("NAME1"), device.name());
-			CPPUNIT_ASSERT_EQUAL(string("@NAME1"), device.displayName());
-			CPPUNIT_ASSERT_EQUAL(string("unknown"), device.vendor());
+			CPPUNIT_ASSERT_EQUAL(string("@NAME1"), device.name());
+			CPPUNIT_ASSERT_EQUAL(string("NAME1"), device.displayName());
+			CPPUNIT_ASSERT_EQUAL(string("@VENDOR1"), device.vendor());
+			CPPUNIT_ASSERT_EQUAL(string("VENDOR1"), device.displayVendor());
 
 			for (auto module : device) {
 				if (module.id() == ModuleInfoID::parse("0x11")) {
@@ -109,9 +110,10 @@ void DevicesSAXHandlerTest::testParseSimple()
 			}
 		}
 		else if (device.id() == DeviceInfoID::parse("0x02")) {
-			CPPUNIT_ASSERT_EQUAL(string("NAME2"), device.name());
-			CPPUNIT_ASSERT_EQUAL(string("@NAME2"), device.displayName());
-			CPPUNIT_ASSERT_EQUAL(string("Good Company"), device.vendor());
+			CPPUNIT_ASSERT_EQUAL(string("@NAME2"), device.name());
+			CPPUNIT_ASSERT_EQUAL(string("NAME2"), device.displayName());
+			CPPUNIT_ASSERT_EQUAL(string("@VENDOR2"), device.vendor());
+			CPPUNIT_ASSERT_EQUAL(string("VENDOR2"), device.displayVendor());
 
 			for (auto module : device) {
 				if (module.id() == ModuleInfoID::parse("0x21")) {
@@ -141,9 +143,10 @@ void DevicesSAXHandlerTest::testParseSimple()
 			}
 		}
 		else if (device.id() == DeviceInfoID::parse("0x03")) {
-			CPPUNIT_ASSERT_EQUAL(string("NAME3"), device.name());
-			CPPUNIT_ASSERT_EQUAL(string("@NAME3"), device.displayName());
-			CPPUNIT_ASSERT_EQUAL(string("Bad Company"), device.vendor());
+			CPPUNIT_ASSERT_EQUAL(string("@NAME3"), device.name());
+			CPPUNIT_ASSERT_EQUAL(string("NAME3"), device.displayName());
+			CPPUNIT_ASSERT_EQUAL(string("@VENDOR3"), device.vendor());
+			CPPUNIT_ASSERT_EQUAL(string("VENDOR3"), device.displayVendor());
 
 			for (auto module : device) {
 				if (module.id() == ModuleInfoID::parse("0x31")) {

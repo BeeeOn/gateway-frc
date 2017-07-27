@@ -8,6 +8,13 @@ namespace BeeeOn {
 
 class GlobalID {
 public:
+	struct Hash {
+		unsigned int operator() (const GlobalID &id)
+		{
+			return id.hash();
+		}
+	};
+
 	GlobalID()
 	{
 	}
@@ -39,6 +46,8 @@ public:
 		gid.m_uuid.parse(s);
 		return gid;
 	}
+
+	unsigned int hash() const;
 
 	std::string toString() const
 	{

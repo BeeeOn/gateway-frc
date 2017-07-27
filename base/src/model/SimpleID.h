@@ -10,6 +10,13 @@ namespace BeeeOn {
 
 class SimpleID {
 public:
+	struct Hash {
+		unsigned int operator() (const SimpleID &id)
+		{
+			return id.hash();
+		}
+	};
+
 	SimpleID():
 		m_value(0)
 	{
@@ -29,6 +36,8 @@ public:
 	{
 		return m_value == 0;
 	}
+
+	unsigned int hash() const;
 
 	operator long() const
 	{

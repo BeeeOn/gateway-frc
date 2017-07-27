@@ -8,7 +8,6 @@
 #include "cppunit/BetterAssert.h"
 #include "work/BasicQueue.h"
 #include "work/Work.h"
-#include "work/WorkAccess.h"
 
 using namespace Poco;
 
@@ -20,7 +19,6 @@ class BasicQueueTest : public CppUnit::TestFixture {
 	CPPUNIT_TEST(testPrioritySchedule);
 	CPPUNIT_TEST(testScheduleWithSuspend);
 	CPPUNIT_TEST(testScheduleIsNotDone);
-	CPPUNIT_TEST(testScheduleExecuted);
 	CPPUNIT_TEST(testCancelOutOfOrder);
 	CPPUNIT_TEST(testCancelNonExisting);
 	CPPUNIT_TEST(testCurrentlyNothing);
@@ -35,7 +33,6 @@ public:
 	void testPrioritySchedule();
 	void testScheduleWithSuspend();
 	void testScheduleIsNotDone();
-	void testScheduleExecuted();
 	void testCancelOutOfOrder();
 	void testCancelNonExisting();
 	void testCurrentlyNothing();
@@ -74,6 +71,7 @@ void BasicQueueTest::testSimpleSchedule()
 
 	do {
 		FastMutex::ScopedLock guard(queue.lock());
+
 		queue.pushUnlocked(work0);
 		queue.pushUnlocked(work1);
 		queue.pushUnlocked(work2);
@@ -133,6 +131,7 @@ void BasicQueueTest::testPrioritySchedule()
 
 	do {
 		FastMutex::ScopedLock guard(queue.lock());
+
 		queue.pushUnlocked(work0);
 		queue.pushUnlocked(work1);
 		queue.pushUnlocked(work2);
@@ -174,6 +173,7 @@ void BasicQueueTest::testScheduleWithSuspend()
 
 	do {
 		FastMutex::ScopedLock guard(queue.lock());
+
 		queue.pushUnlocked(work0);
 		queue.pushUnlocked(work1);
 		queue.pushUnlocked(work2);
@@ -218,52 +218,6 @@ void BasicQueueTest::testScheduleIsNotDone()
 }
 
 /**
- * Work in state EXECUTED is locked by Work::executionLock().
- */
-void BasicQueueTest::testScheduleExecuted()
-{
-	BasicQueue queue;
-
-	CPPUNIT_ASSERT(queue.pop(false).isNull());
-
-	Work::Ptr work(new Work(WorkID::parse("b812f233-fb90-46f2-8f91-4a1c518440a5")));
-	work->setState(Work::STATE_EXECUTED);
-
-	Timestamp now;
-	AtomicCounter executing;
-
-	Thread t;
-	t.startFunc(
-		[&]() {
-			WorkExecuting guard(work, __FILE__, __LINE__);
-			executing = 1;
-			Thread::current()->sleep(100);
-		}
-	);
-
-	// wait until the work->executionLock() is held
-	while (executing == 0)
-		Thread::current()->yield();
-
-	// FIXME:
-	// CPPUNIT_ASSERT(!work->executionLock().tryLock());
-
-	do {
-		CPPUNIT_ASSERT(now.elapsed() < 100000);
-
-		FastMutex::ScopedLock guard(queue.lock());
-		queue.pushUnlocked(work);
-	} while (0);
-
-	// we have been waiting until the thread wakes up
-	CPPUNIT_ASSERT(now.elapsed() > 100000);
-	CPPUNIT_ASSERT(work->state() == Work::STATE_SCHEDULED);
-	CPPUNIT_ASSERT(work == queue.pop(false));
-
-	t.join();
-}
-
-/**
  * Test we can cancel works out-of order.
  */
 void BasicQueueTest::testCancelOutOfOrder()
@@ -283,6 +237,7 @@ void BasicQueueTest::testCancelOutOfOrder()
 
 	do {
 		FastMutex::ScopedLock guard(queue.lock());
+
 		queue.pushUnlocked(work0);
 		queue.pushUnlocked(work1);
 		queue.pushUnlocked(work2);
@@ -555,6 +510,7 @@ void BasicQueueTest::testWakeupWaiting()
 
 	do {
 		FastMutex::ScopedLock guard(queue.lock());
+
 		queue.pushUnlocked(work0);
 		queue.pushUnlocked(work1);
 		queue.pushUnlocked(work2);

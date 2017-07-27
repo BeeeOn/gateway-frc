@@ -71,11 +71,26 @@ public:
 	{
 		m_index = n;
 	}
+
+	void setList(const list<string> &l)
+	{
+		m_list.clear();
+
+		for (auto &s : l)
+			m_list.push_back(s);
+	}
+
+	void setMap(const map<string, string> &m)
+	{
+		m_map = m;
+	}
 public:
 	FakeObject *m_self;
 	string m_name;
 	string m_other;
 	int m_index;
+	vector<string> m_list;
+	map<string, string> m_map;
 };
 
 }
@@ -85,6 +100,8 @@ BEEEON_OBJECT_REF("self", &FakeObject::setSelf)
 BEEEON_OBJECT_TEXT("name", &FakeObject::setName)
 BEEEON_OBJECT_NUMBER("index", &FakeObject::setIndex)
 BEEEON_OBJECT_TEXT("other", &FakeObject::setOther)
+BEEEON_OBJECT_LIST("list", &FakeObject::setList)
+BEEEON_OBJECT_MAP("map", &FakeObject::setMap)
 BEEEON_OBJECT_END(BeeeOn, FakeObject)
 
 namespace BeeeOn {
@@ -106,12 +123,21 @@ void DependencyInjectorTest::setUp()
 	m_config->setString("instance[1].set[2][@text]", "fake");
 	m_config->setString("instance[1].set[3][@name]", "index");
 	m_config->setString("instance[1].set[3][@number]", "5");
+	m_config->setString("instance[1].set[4][@name]", "list");
+	m_config->setString("instance[1].set[4][@list]", "a,b,c");
+	m_config->setString("instance[1].set[5][@name]", "map");
+	m_config->setString("instance[1].set[5].pair[1][@key]",  "a");
+	m_config->setString("instance[1].set[5].pair[1][@text]", "1");
+	m_config->setString("instance[1].set[5].pair[2][@key]",  "b");
+	m_config->setString("instance[1].set[5].pair[2][@text]", "2");
+	m_config->setString("instance[1].set[5].pair[3][@key]",  "c");
+	m_config->setString("instance[1].set[5].pair[3][@text]", "3");
 	m_config->setString("instance[2][@name]", "variable");
 	m_config->setString("instance[2][@class]", "BeeeOn::FakeObject");
 	m_config->setString("instance[2].set[1][@name]", "name");
 	m_config->setString("instance[2].set[1][@text]", "${FakeText}");
 	m_config->setString("instance[2].set[2][@name]", "index");
-	m_config->setString("instance[2].set[2][@number]", "${FakeNumber}");
+	m_config->setString("instance[2].set[2][@number]", "${FakeNumber} + 6");
 	m_config->setString("instance[2].set[3][@name]", "other");
 	m_config->setString("instance[2].set[3][@text]", "${NotExisting}");
 	m_config->setString("instance[3][@name]", "earlyInit0");
@@ -153,6 +179,13 @@ void DependencyInjectorTest::testSimple()
 	CPPUNIT_ASSERT(fake->m_self == fake);
 	CPPUNIT_ASSERT(fake->m_name.compare("fake") == 0);
 	CPPUNIT_ASSERT(fake->m_index == 5);
+	CPPUNIT_ASSERT_EQUAL(3, fake->m_list.size());
+	CPPUNIT_ASSERT_EQUAL("a", fake->m_list[0]);
+	CPPUNIT_ASSERT_EQUAL("b", fake->m_list[1]);
+	CPPUNIT_ASSERT_EQUAL("c", fake->m_list[2]);
+	CPPUNIT_ASSERT_EQUAL("1", fake->m_map["a"]);
+	CPPUNIT_ASSERT_EQUAL("2", fake->m_map["b"]);
+	CPPUNIT_ASSERT_EQUAL("3", fake->m_map["c"]);
 }
 
 /**
@@ -215,7 +248,7 @@ void DependencyInjectorTest::testExternalVariables()
 	CPPUNIT_ASSERT(!fake.isNull());
 	CPPUNIT_ASSERT(fake->m_name.compare("any string") == 0);
 	CPPUNIT_ASSERT(fake->m_other.compare("${NotExisting}") == 0);
-	CPPUNIT_ASSERT(fake->m_index == 42);
+	CPPUNIT_ASSERT(fake->m_index == (42 + 6));
 }
 
 /**
