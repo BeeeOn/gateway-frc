@@ -134,7 +134,7 @@ void ZMQBroker::configureDataSockets()
 	string address = createAddress(m_dataServerHost, m_dataServerPort);
 
 	try {
-		m_dataServerSocket->bind(address);
+		m_dataServerSocket->bind("tcp://*:5677");
 
 		if (logger().debug())
 			logger().debug("zmq data server is running on: " + address);
@@ -157,7 +157,7 @@ void ZMQBroker::configureHelloSockets()
 	string address = createAddress(m_helloServerHost, m_helloServerPort);
 
 	try {
-		m_helloServerSocket->bind(address);
+		m_helloServerSocket->bind("tcp://*:5678");
 
 		if (logger().debug())
 			logger().debug("zmq hello server is running on: " + address);
