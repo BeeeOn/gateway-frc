@@ -176,7 +176,11 @@ UDevEvent UDevMonitor::createEvent(struct udev_device *dev) const
 	UDevEvent event;
 
 	const char *node = ::udev_device_get_devnode(dev);
+#ifndef LIBUDEV_FBSD_H_
 	const char *type = ::udev_device_get_devtype(dev);
+#else
+	const char *type = "";
+#endif
 	const char *sysname = ::udev_device_get_sysname(dev);
 	const char *driver = ::udev_device_get_driver(dev);
 
