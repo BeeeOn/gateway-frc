@@ -159,7 +159,7 @@ void ZMQBroker::configureHelloSockets()
 	string address = "ipc:///tmp/feeds/1";
 
 	try {
-		m_helloServerSocket->bind(adress);
+		m_helloServerSocket->bind(address);
 
 		if (logger().debug())
 			logger().debug("zmq hello server is running on: " + address);
